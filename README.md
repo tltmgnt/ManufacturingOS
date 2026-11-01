@@ -18,7 +18,7 @@ manufacturing-os bundle create examples/integrated-study.json --output study-bun
 manufacturing-os bundle verify study-bundle.zip
 ```
 
-On Windows, activate with `.venv\Scripts\activate` instead. Commands are `plan`, `estimate`, `experiment`, `simulate`, `study`, `review`, `compare`, `bundle`, `evidence`, `sources`, `capture`, `notes`, `replicate`, `observations`, `campaign`, and `campaign-bundle`; each supports `--help` and preserves its component's arguments and exit codes. `python -m manufacturing_os.cli` provides the same router. Existing module commands below continue to work, including the original `python -m manufacturing_os INPUT` planning interface.
+On Windows, activate with `.venv\Scripts\activate` instead. Commands are `plan`, `estimate`, `experiment`, `simulate`, `study`, `review`, `compare`, `bundle`, `evidence`, `sources`, `capture`, `notes`, `replicate`, `observations`, `campaign`, `campaign-bundle`, and `schema`; each supports `--help` and preserves its component's arguments and exit codes. `python -m manufacturing_os.cli` provides the same router. Existing module commands below continue to work, including the original `python -m manufacturing_os INPUT` planning interface.
 
 The package has no third-party runtime dependencies. Building from source uses setuptools and wheel; pip may fetch build tools in its isolated build environment. To install a downloaded CI wheel offline, use `python -m pip install --no-index --no-deps PATH_TO_WHEEL.whl`. Input examples remain in the source checkout and are not installed as package data; pass your own JSON paths when running elsewhere. The versioned prototype is not published to PyPI by this workflow.
 
@@ -367,3 +367,30 @@ All CLI JSON file inputs and embedded archive/reference JSON now use one bounded
 Files must be UTF-8, with an optional UTF-8 BOM; UTF-16/32 is not silently autodetected. Configuration/input files default to 32 MiB, while full-report consumers use 128 MiB. Embedded archive payloads remain subject to archive limits as well as strict JSON parsing. Inputs are stat-checked, opened as regular files, read with a byte bound, and checked on the same descriptor for size/identity/mtime/ctime changes. Directories/FIFOs and files changing during reads fail explicitly. An explicitly selected regular-file symlink is allowed here; the separate source-capture root still enforces its stricter no-symlink policy.
 
 These checks do not authenticate files or make metadata tamper-proof. They prevent ambiguous field selection, non-finite JSON values, unbounded JSON reads, and accidental mixed-file revisions within the documented checks. Invalid input returns the existing command error code `2` before new output is created. Model contracts, units, approvals, report serialization, and valid existing study/bundle contents remain unchanged.
+
+## Exportable core JSON Schemas
+
+```sh
+manufacturing-os schema list
+manufacturing-os schema export input --output manufacturing-input.schema.json
+manufacturing-os schema export scenario --output scenario.schema.json
+manufacturing-os schema validate input examples/evidence-input.json
+manufacturing-os schema validate scenario examples/serial-route.json
+```
+
+The two v1.0 core contracts (`ManufacturingInput` and serial-route `Scenario`) ship as JSON Schema Draft 2020-12 documents inside the wheel. Their stable URN identifiers and internal-only `$ref` definitions support editor associations and external structural validators without adding runtime dependencies or fetching remote references. Configure schema associations in the editor/tool; adding a `$schema` property to an actual input is not supported by the runtime's exact-field contract.
+
+`schema validate` uses the existing authoritative runtime parsers, not a partial reimplementation or a generic JSON Schema engine. It performs strict JSON ingestion plus model checks without starting agents, simulations, or a study. A `VALID` result means the input contract is satisfied only; even a correctly represented hard-constraint violation can be valid input, and no production authorization is granted.
+
+The exported schemas describe structure, required/unknown fields, ordinary ranges, unit shapes, and constraint issue/null rules. They cannot replace every semantic check. Runtime validation additionally enforces entity-ID uniqueness, evidence claim references, timezone-aware UTC timestamps, exact integer representation, and rate units matching the root currency. JSON Schema considers `1.0` an integer mathematically, while runtime count fields require an actual JSON integer. Those boundaries are documented and tested explicitly.
+
+Export output is exclusively created; existing files are preserved. List/export/valid input exit `0`; unknown contracts, invalid semantic/JSON input, missing packaged assets, and I/O errors exit `2`. Each export reads a fresh packaged document, so callers cannot mutate shared schema state.
+
+Local standard-library tests exercise export and authoritative validation. CI additionally installs the development-only validator from `requirements-schema-tests.txt`, checks both documents against the Draft 2020-12 metaschema, validates positive/negative structural fixtures, and demonstrates the documented semantic boundaries. To reproduce that independent check:
+
+```sh
+python -m pip install -r requirements-schema-tests.txt
+python tests/check_exported_schemas.py
+```
+
+The validator is not a runtime requirement. The isolated wheel test confirms the JSON assets are included and that export/validation work without it.

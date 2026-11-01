@@ -112,3 +112,12 @@ jobs:
           name: synthetic-campaign-review-python-${{ matrix.python-version }}
           path: ci-campaign-review.zip
           if-no-files-found: error
+      - run: python -m pip install -r requirements-schema-tests.txt
+      - run: python tests/check_exported_schemas.py
+      - run: python -m manufacturing_os.cli schema export input --output ci-manufacturing-input.schema.json
+      - run: python -m manufacturing_os.cli schema export scenario --output ci-scenario.schema.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: core-json-schemas-python-${{ matrix.python-version }}
+          path: ci-*.schema.json
+          if-no-files-found: error

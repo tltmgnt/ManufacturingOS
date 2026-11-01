@@ -1,0 +1,247 @@
+{
+  "$defs": {
+    "nonempty": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "type": "string"
+    },
+    "quantity": {
+      "additionalProperties": false,
+      "properties": {
+        "unit": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "type": "string"
+        },
+        "value": {
+          "exclusiveMinimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "unit"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "urn:manufacturingos:schema:manufacturing-input:1.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Structural input contract. Runtime validation additionally checks ID uniqueness, evidence references, exact Python numeric types, and UTC timestamps.",
+  "properties": {
+    "bom": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "item_id": {
+            "$ref": "#/$defs/nonempty"
+          },
+          "quantity": {
+            "$ref": "#/$defs/quantity"
+          },
+          "revision": {
+            "$ref": "#/$defs/nonempty"
+          }
+        },
+        "required": [
+          "item_id",
+          "revision",
+          "quantity"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "constraints": {
+      "items": {
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "else": {
+              "properties": {
+                "issue": {
+                  "$ref": "#/$defs/nonempty"
+                }
+              }
+            },
+            "if": {
+              "properties": {
+                "satisfied": {
+                  "const": true
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "issue": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        ],
+        "properties": {
+          "constraint_id": {
+            "$ref": "#/$defs/nonempty"
+          },
+          "issue": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kind": {
+            "enum": [
+              "hard",
+              "conditional",
+              "soft"
+            ]
+          },
+          "satisfied": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "constraint_id",
+          "kind",
+          "satisfied",
+          "issue"
+        ],
+        "type": "object"
+      },
+      "minItems": 0,
+      "type": "array"
+    },
+    "demand": {
+      "$ref": "#/$defs/quantity"
+    },
+    "design_revision": {
+      "$ref": "#/$defs/nonempty"
+    },
+    "evidence": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "captured_at": {
+            "description": "Runtime validation requires a timezone-aware ISO 8601 UTC timestamp.",
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "claim_ids": {
+            "items": {
+              "$ref": "#/$defs/nonempty"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/$defs/nonempty"
+              }
+            ]
+          },
+          "evidence_id": {
+            "$ref": "#/$defs/nonempty"
+          },
+          "evidence_type": {
+            "$ref": "#/$defs/nonempty"
+          },
+          "revision": {
+            "$ref": "#/$defs/nonempty"
+          },
+          "source_owner": {
+            "$ref": "#/$defs/nonempty"
+          },
+          "source_uri": {
+            "$ref": "#/$defs/nonempty"
+          }
+        },
+        "required": [
+          "evidence_id",
+          "source_uri",
+          "source_owner",
+          "revision",
+          "captured_at",
+          "evidence_type",
+          "claim_ids"
+        ],
+        "type": "object"
+      },
+      "minItems": 0,
+      "type": "array"
+    },
+    "facility": {
+      "additionalProperties": false,
+      "properties": {
+        "facility_id": {
+          "$ref": "#/$defs/nonempty"
+        },
+        "revision": {
+          "$ref": "#/$defs/nonempty"
+        }
+      },
+      "required": [
+        "facility_id",
+        "revision"
+      ],
+      "type": "object"
+    },
+    "package_id": {
+      "$ref": "#/$defs/nonempty"
+    },
+    "product_id": {
+      "$ref": "#/$defs/nonempty"
+    },
+    "requirements": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "$ref": "#/$defs/nonempty"
+          },
+          "requirement_id": {
+            "$ref": "#/$defs/nonempty"
+          }
+        },
+        "required": [
+          "requirement_id",
+          "description"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "revision": {
+      "$ref": "#/$defs/nonempty"
+    },
+    "schema_version": {
+      "const": "1.0"
+    }
+  },
+  "required": [
+    "schema_version",
+    "package_id",
+    "revision",
+    "product_id",
+    "design_revision",
+    "bom",
+    "requirements",
+    "demand",
+    "facility",
+    "constraints",
+    "evidence"
+  ],
+  "title": "ManufacturingInput v1.0",
+  "type": "object"
+}

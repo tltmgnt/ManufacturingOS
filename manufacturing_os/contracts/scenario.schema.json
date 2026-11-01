@@ -1,0 +1,195 @@
+{
+  "$defs": {
+    "duration": {
+      "additionalProperties": false,
+      "properties": {
+        "unit": {
+          "enum": [
+            "s",
+            "min",
+            "h"
+          ]
+        },
+        "value": {
+          "minimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "unit"
+      ],
+      "type": "object"
+    },
+    "hourly_rate": {
+      "additionalProperties": false,
+      "properties": {
+        "unit": {
+          "maxLength": 5,
+          "minLength": 5,
+          "pattern": "^[A-Z]{3}/h$",
+          "type": "string"
+        },
+        "value": {
+          "minimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "unit"
+      ],
+      "type": "object"
+    },
+    "material_rate": {
+      "additionalProperties": false,
+      "properties": {
+        "unit": {
+          "maxLength": 9,
+          "minLength": 9,
+          "pattern": "^[A-Z]{3}/piece$",
+          "type": "string"
+        },
+        "value": {
+          "minimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "unit"
+      ],
+      "type": "object"
+    },
+    "nonempty": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "type": "string"
+    },
+    "positive_duration": {
+      "additionalProperties": false,
+      "properties": {
+        "unit": {
+          "enum": [
+            "s",
+            "min",
+            "h"
+          ]
+        },
+        "value": {
+          "exclusiveMinimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "unit"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "urn:manufacturingos:schema:serial-route-scenario:1.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Structural scenario contract. Runtime checks additionally require unique operation IDs, exact integer types, and rate units matching the declared currency.",
+  "properties": {
+    "assumptions": {
+      "items": {
+        "$ref": "#/$defs/nonempty"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "currency": {
+      "maxLength": 3,
+      "minLength": 3,
+      "pattern": "^[A-Z]{3}$",
+      "type": "string"
+    },
+    "horizon": {
+      "$ref": "#/$defs/positive_duration"
+    },
+    "material_cost_per_start": {
+      "$ref": "#/$defs/material_rate"
+    },
+    "operations": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "availability": {
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "type": "number"
+          },
+          "cycle_time": {
+            "$ref": "#/$defs/positive_duration"
+          },
+          "labor_rate": {
+            "$ref": "#/$defs/hourly_rate"
+          },
+          "machine_rate": {
+            "$ref": "#/$defs/hourly_rate"
+          },
+          "machines": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "operation_id": {
+            "$ref": "#/$defs/nonempty"
+          },
+          "setup_time": {
+            "$ref": "#/$defs/duration"
+          },
+          "yield_fraction": {
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "operation_id",
+          "cycle_time",
+          "setup_time",
+          "machines",
+          "availability",
+          "yield_fraction",
+          "machine_rate",
+          "labor_rate"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "revision": {
+      "$ref": "#/$defs/nonempty"
+    },
+    "scenario_id": {
+      "$ref": "#/$defs/nonempty"
+    },
+    "schema_version": {
+      "const": "1.0"
+    },
+    "source_reference": {
+      "$ref": "#/$defs/nonempty"
+    },
+    "target_good_units": {
+      "minimum": 1,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema_version",
+    "scenario_id",
+    "revision",
+    "currency",
+    "target_good_units",
+    "horizon",
+    "material_cost_per_start",
+    "operations",
+    "source_reference",
+    "assumptions"
+  ],
+  "title": "Serial-route Scenario v1.0",
+  "type": "object"
+}

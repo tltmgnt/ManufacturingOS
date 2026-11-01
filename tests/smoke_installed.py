@@ -20,6 +20,8 @@ def main():
         paths=archive.namelist()
         assert not any(path.startswith(('tests/','runs/','examples/')) for path in paths)
         assert 'manufacturing_os/cli.py' in paths
+        assert 'manufacturing_os/contracts/manufacturing-input.schema.json' in paths
+        assert 'manufacturing_os/contracts/scenario.schema.json' in paths
         metadata=archive.read(next(path for path in paths if path.endswith('.dist-info/METADATA'))).decode()
         assert '\nRequires-Dist:' not in metadata, 'unexpected runtime dependencies'
     with tempfile.TemporaryDirectory() as directory:
@@ -40,7 +42,7 @@ def main():
         version=run([executable,'--version']).strip()
         location=run([python,'-c','import manufacturing_os; print(manufacturing_os.__file__)']).strip()
         assert Path(location).resolve().is_relative_to(environment.resolve()), location
-        for command in ['plan','estimate','experiment','simulate','study','review','compare','bundle','evidence','sources','capture','notes','replicate','observations','campaign','campaign-bundle']:
+        for command in ['plan','estimate','experiment','simulate','study','review','compare','bundle','evidence','sources','capture','notes','replicate','observations','campaign','campaign-bundle','schema']:
             run([executable,command,'--help'])
         evidence=json.loads(run([executable,'evidence',ROOT/'examples/evidence-input.json',ROOT/'examples/evidence-policy.json']))
         assert evidence['status']=='METADATA_CHECKS_PASSED'
@@ -75,6 +77,11 @@ def main():
         ambiguous.write_text('{"schema_version":"1.0",'+json.dumps(valid_spec)[1:])
         rejected=subprocess.run([str(executable),'study',str(ambiguous)],cwd=working,env=env,capture_output=True,text=True)
         assert rejected.returncode==2 and 'duplicate JSON key' in rejected.stderr
+        schema_file=working/'scenario.schema.json'
+        run([executable,'schema','export','scenario','--output',schema_file])
+        assert json.loads(schema_file.read_text())['title']=='Serial-route Scenario v1.0'
+        validated=json.loads(run([executable,'schema','validate','scenario',ROOT/'examples/serial-route.json']))
+        assert validated['status']=='VALID' and validated['production_authorized'] is False
         before=working/'before.json'
         after=working/'after.json'
         review=working/'review.html'

@@ -32,3 +32,6 @@ version = {attr = "manufacturing_os._version.__version__"}
 [tool.setuptools.packages.find]
 include = ["manufacturing_os*"]
 exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+manufacturing_os = ["contracts/*.schema.json"]
