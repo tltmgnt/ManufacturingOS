@@ -53,7 +53,9 @@ Three cases are generated:
 Open `runs/temporary-bracket-demo/index.html` for an offline comparison of all
 three cases, target counts, cost residuals and review states. The page links to
 each case review, JSON report and ZIP bundle. Keep the directory tree together
-when copying or downloading the results.
+when copying or downloading the results. Narrow screens show labeled case cards
+so target outcomes, review states and file links remain in view without horizontal
+scrolling.
 
 Each case contains its input, preflight, full report, observation checks, offline
 HTML review, portable ZIP review and bundle verification. `summary.json` records
