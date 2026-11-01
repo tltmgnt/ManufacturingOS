@@ -1,0 +1,2 @@
+# Development/CI only; not a runtime package dependency.
+playwright>=1.50,<2
