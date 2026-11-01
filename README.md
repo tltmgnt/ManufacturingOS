@@ -6,8 +6,9 @@ See [release notes](CHANGELOG.md) for the delivered scope and known limits, and 
 
 ## Try a temporary use case
 
-A [synthetic bracket demo](docs/temporary-use-case.md) runs reference agreement and
-a deliberate cost disagreement, exporting offline reviews and verified bundles:
+A [synthetic bracket demo](docs/temporary-use-case.md) runs reference agreement,
+a deliberate cost disagreement, and a missed production target, exporting offline
+reviews and verified bundles:
 
 ```sh
 python -m examples.temporary_use_case --output runs/temporary-bracket-demo

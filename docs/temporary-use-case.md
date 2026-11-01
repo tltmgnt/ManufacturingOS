@@ -35,7 +35,7 @@ those outputs are model demonstrations rather than empirical estimates.
 The full cost is 15 USD material + 90 USD cutting + 120 USD finishing.
 It includes processing after the 5-hour horizon.
 
-Two cases are generated:
+Three cases are generated:
 
 - **baseline:** the model agrees with the synthetic reference; the report still
   requires human review and grants no production authorization.
@@ -44,9 +44,15 @@ Two cases are generated:
   residual, an observation FAIL and a REVISION_REQUIRED review state. The runner
   exits successfully when this expected failure is correctly detected.
 
+- **target-miss:** demand increases from two to three brackets by hour 5. The
+  same physical process still produces only two in that horizon. All six reference
+  checks PASS, but `target_met` is false and the report retains
+  SIMULATED_TARGET_MISS with REVISION_REQUIRED. Eventual completion at hour 7
+  does not satisfy the earlier deadline.
+
 Each case contains its input, preflight, full report, observation checks, offline
 HTML review, portable ZIP review and bundle verification. `summary.json` records
-both outcomes and explicitly marks empirical calibration incomplete. Open
+all three outcomes and explicitly marks empirical calibration incomplete. Open
 `baseline/study-review.html` and `cost-disagreement/study-review.html` to compare
 agreement with a visible disagreement. Verification checks reconstructability,
 not authenticity or approval.
@@ -59,9 +65,10 @@ synthetic case as a regression example rather than relabeling it as measured dat
 
 ## Continuous integration
 
-The Python 3.11–3.13 CI matrix executes both cases. A successful job means the
+The Python 3.11–3.13 CI matrix executes all three cases. A successful job means the
 baseline agrees and the deliberately wrong reference is detected; it does not
-mean both observation reports pass. Any unexpected observation status, loss of
+mean every observation report passes or every production target is met. The
+target-miss case must retain its shortfall finding despite reference agreement. Any unexpected observation status, loss of
 the +5 USD residual, loss of the disagreement review requirement, production
 authorization, or invalid bundle causes the runner to fail.
 
