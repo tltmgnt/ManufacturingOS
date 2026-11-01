@@ -105,3 +105,16 @@ The reference suite may be `null`. When supplied, at least one reference case mu
 Every report stores the original study input, component versions/fingerprints, all component outputs, review findings, and required approval roles. Re-running its `input` reconstructs the deterministic report. Optional output uses exclusive creation, preserving existing files. Exit codes are `0` for a completed study needing human review, `1` for revision-required findings, and `2` for invalid/stale input or I/O errors. A zero exit code grants no release authority.
 
 The integrated synthetic example binds 72 pieces of demand to the serial-route scenario, runs the 100-job seed-42 simulation and 100 uncertainty samples, and checks the 12 synthetic reference metrics. This connects the existing modules without replacing mock specialist conclusions, granting approvals, or adding enterprise/equipment interfaces. Real facility calibration remains outstanding.
+
+## Offline HTML review export
+
+```sh
+python -m manufacturing_os.study examples/integrated-study.json --output study-report.json
+python -m manufacturing_os.review study-report.json --output study-review.html
+```
+
+Open the HTML file in a browser for a responsive, printable review summary. Blocking findings come first, followed by study identity, cost and capacity with units, finite-horizon good/scrap/WIP and queue counts, assumed uncertainty ranges and sampled percentiles, reference residuals, original plan findings/conflicts, mock specialist issues, pending approval roles, evidence sources, assumptions, versions, and content fingerprints. Displayed measurements use six significant digits; keep the source JSON for exact numbers, full timelines, and per-sample records.
+
+Before rendering, the exporter re-runs the saved study input and compares the entire report content against reconstruction. Altered results or a model-version mismatch are rejected; regenerate the source report using the matching implementation. Reproducibility is not a cryptographic signature, approval, or validation of source claims. The exact study input is included in a collapsible provenance section.
+
+All input text is escaped. Source references remain plain text, and the HTML uses no scripts, forms, external fonts, images, or network resources. Internal section links aid navigation. A content security policy restricts resources to the embedded styles. The exporter preserves existing output files and exits `2` on invalid, stale, non-reproducible, or unwritable input/output. A completed export exits `0`, including reports that require revision. The export provides no approval actions or production authorization.

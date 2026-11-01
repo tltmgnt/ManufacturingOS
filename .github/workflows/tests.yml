@@ -20,3 +20,5 @@ jobs:
       - run: python -m manufacturing_os.experiments simulate examples/uncertainty-experiment.json
       - run: python -m manufacturing_os.simulation examples/finite-batch.json
       - run: python -m manufacturing_os.study examples/integrated-study.json
+      - run: python -m manufacturing_os.study examples/integrated-study.json --output ci-study-report.json
+      - run: python -m manufacturing_os.review ci-study-report.json --output ci-study-review.html
