@@ -105,6 +105,7 @@ class ObservationTests(unittest.TestCase):
         self.spec['observation_checks']['tolerances']['full_batch_total_cost']['value']=-1
         with self.assertRaises(ValueError):
             run_study(self.spec)
+        self.spec['observation_checks']['tolerances']['full_batch_total_cost']['value']=1e-9
         raw=json.dumps(self.reference).replace('"value": 225','"value": 220, "value": 225').encode()
         self.spec['manufacturing_input']['evidence'][0]['content_hash']=hashlib.sha256(raw).hexdigest()
         self.spec['evidence_snapshot']['files'][0]['content_base64']=base64.b64encode(raw).decode()

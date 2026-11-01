@@ -8,6 +8,7 @@ from .jsonio import loads,read_json
 from .models import ManufacturingInput
 
 CONTRACTS = {'input':'manufacturing-input.schema.json','scenario':'scenario.schema.json'}
+VALIDATION_CONTRACTS = (*CONTRACTS,'study')
 
 
 def get_schema(name: str) -> dict:
@@ -22,6 +23,9 @@ def list_schemas() -> list[dict]:
 
 
 def validate_contract(name: str,data: dict) -> dict:
+    if name=='study':
+        from .study import preflight_study
+        return preflight_study(data)
     if name=='input':
         ManufacturingInput.from_dict(data)
     elif name=='scenario':
@@ -42,7 +46,7 @@ def main(argv: list[str] | None = None) -> int:
     export.add_argument('name',choices=CONTRACTS)
     export.add_argument('--output',type=Path,help='Create a new JSON Schema file without overwriting')
     validate=commands.add_parser('validate')
-    validate.add_argument('name',choices=CONTRACTS)
+    validate.add_argument('name',choices=VALIDATION_CONTRACTS)
     validate.add_argument('input',type=Path)
     args=parser.parse_args(argv)
     try:

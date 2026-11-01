@@ -121,3 +121,4 @@ jobs:
           name: core-json-schemas-python-${{ matrix.python-version }}
           path: ci-*.schema.json
           if-no-files-found: error
+      - run: python -m manufacturing_os.cli schema validate study examples/observation-study.json

@@ -82,6 +82,8 @@ def main():
         assert json.loads(schema_file.read_text())['title']=='Serial-route Scenario v1.0'
         validated=json.loads(run([executable,'schema','validate','scenario',ROOT/'examples/serial-route.json']))
         assert validated['status']=='VALID' and validated['production_authorized'] is False
+        preflight=json.loads(run([executable,'schema','validate','study',ROOT/'examples/observation-study.json']))
+        assert preflight['analysis_executed'] is False and preflight['scope']=='STUDY_INPUT_PREFLIGHT'
         before=working/'before.json'
         after=working/'after.json'
         review=working/'review.html'

@@ -32,7 +32,7 @@ def apply_value(scenario: dict, operation_id: str, parameter: str, value: float)
         operation[parameter] = value
 
 
-def simulate(spec: dict) -> dict:
+def validate_uncertainty(spec: dict) -> None:
     fields(spec, {"schema_version", "experiment_id", "revision", "seed", "samples", "scenario", "ranges"}, "experiment")
     if spec["schema_version"] != "1.0":
         raise ValueError("unsupported experiment schema")
@@ -42,7 +42,7 @@ def simulate(spec: dict) -> dict:
         raise ValueError("seed must be an integer in [0, 2**32-1]")
     if type(spec["samples"]) is not int or not 1 <= spec["samples"] <= 10000:
         raise ValueError("samples must be an integer in [1, 10000]")
-    baseline = estimate(Scenario.from_dict(spec["scenario"]))
+    Scenario.from_dict(spec["scenario"])
     if not isinstance(spec["ranges"], list):
         raise ValueError("ranges must be a list")
     ids = {row["operation_id"] for row in spec["scenario"]["operations"]}
@@ -65,6 +65,11 @@ def simulate(spec: dict) -> dict:
             apply_value(candidate, *key, endpoint)
             # Enforce field-specific units and admissible domains at both endpoints.
             Scenario.from_dict(candidate)
+
+
+def simulate(spec: dict) -> dict:
+    validate_uncertainty(spec)
+    baseline = estimate(Scenario.from_dict(spec["scenario"]))
     rng = random.Random(spec["seed"])
     values = {key: [] for key in METRICS}
     bottlenecks: dict[str, int] = {}
@@ -112,7 +117,38 @@ def simulate(spec: dict) -> dict:
             "validation_status": "UNVALIDATED_EXPLORATION", "production_authorized": False}
 
 
+def validate_reference_contract(suite: dict) -> None:
+    fields(suite, {"schema_version", "suite_id", "revision", "reference_type", "cases"}, "reference suite")
+    if suite["schema_version"] != "1.0" or suite["reference_type"] != "synthetic_arithmetic":
+        raise ValueError("only v1 synthetic_arithmetic reference suites are supported")
+    for name in ("suite_id", "revision"):
+        nonempty(suite[name],name)
+    if not isinstance(suite["cases"],list) or not suite["cases"]:
+        raise ValueError("reference cases cannot be empty")
+    seen=set()
+    for case in suite["cases"]:
+        fields(case, {"case_id", "objective", "reference_revision", "source_reference", "scenario", "expected"}, "case")
+        for name in ("case_id", "objective", "reference_revision", "source_reference"):
+            nonempty(case[name],name)
+        if case["case_id"] in seen:
+            raise ValueError("duplicate case_id")
+        seen.add(case["case_id"])
+        scenario=Scenario.from_dict(case["scenario"])
+        expected=case["expected"]
+        if not isinstance(expected,dict) or not expected or not set(expected)<=METRICS:
+            raise ValueError("expected must contain supported numeric metrics")
+        units={"expected_starts":"piece","expected_scrap":"piece","route_yield":"fraction",
+               "expected_good_capacity":"piece/horizon","total_cost":scenario.currency,"unit_cost":scenario.currency+"/good_piece"}
+        for metric,row in expected.items():
+            fields(row,{"value","unit","absolute_tolerance"},"expected metric")
+            number(row["value"],"expected value")
+            number(row["absolute_tolerance"],"absolute_tolerance")
+            if row["unit"]!=units[metric]:
+                raise ValueError("reference unit differs from model output")
+
+
 def validate_references(suite: dict) -> dict:
+    validate_reference_contract(suite)
     fields(suite, {"schema_version", "suite_id", "revision", "reference_type", "cases"}, "reference suite")
     if suite["schema_version"] != "1.0" or suite["reference_type"] != "synthetic_arithmetic":
         raise ValueError("only v1 synthetic_arithmetic reference suites are supported")

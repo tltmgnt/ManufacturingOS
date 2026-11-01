@@ -21,7 +21,7 @@ COMMANDS = {
     "observations": ("observations", "Inspect source-backed reference agreement checks"),
     "campaign": ("campaign", "Evaluate bounded multi-study software expectations"),
     "campaign-bundle": ("campaign_bundle", "Create or verify portable campaign reviews"),
-    "schema": ("schemas", "Export or validate core versioned input contracts"),
+    "schema": ("schemas", "Export input schemas or preflight input contracts"),
 }
 
 

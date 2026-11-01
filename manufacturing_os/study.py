@@ -8,11 +8,11 @@ from .jsonio import read_json
 from .calculations import Scenario, estimate, fields, nonempty
 from .engine import Orchestrator
 from .evidence import assess_evidence
-from .experiments import simulate, validate_references
+from .experiments import simulate, validate_references, validate_uncertainty, validate_reference_contract
 from .models import ManufacturingInput, digest
-from .simulation import simulate_batch
+from .simulation import simulate_batch, validate_simulation
 from .sources import verify_sources
-from .replications import run_replications
+from .replications import run_replications, validate_experiment as validate_replications
 from .observations import evaluate_observations
 
 STUDY_VERSION = "integrated-study-1.0"
@@ -24,7 +24,7 @@ def binding(package: dict, scenario: dict) -> dict:
             "scenario_fingerprint": digest(asdict(Scenario.from_dict(scenario)))}
 
 
-def run_study(spec: dict) -> dict:
+def prepare_study(spec: dict) -> dict:
     optional = set(spec) & {"evidence_policy", "evidence_snapshot", "replications", "observation_checks"} if isinstance(spec, dict) else set()
     fields(spec, {"schema_version", "study_id", "revision", "manufacturing_input", "scenario", "binding",
                   "simulation", "uncertainty", "reference_suite"} | optional, "study")
@@ -54,6 +54,58 @@ def run_study(spec: dict) -> dict:
                         "revision": spec["revision"], "scenario": deepcopy(spec["scenario"]), **spec["simulation"]}
     uncertainty_input = {"schema_version": "1.0", "experiment_id": spec["study_id"]+"/uncertainty",
                          "revision": spec["revision"], "scenario": deepcopy(spec["scenario"]), **spec["uncertainty"]}
+    validate_simulation(simulation_input)
+    validate_uncertainty(uncertainty_input)
+    checks=["study_contract","version_binding","demand_target","simulation_configuration","uncertainty_configuration"]
+    if "replications" in optional:
+        fields(spec["replications"],{"runs"},"study replications")
+        validate_replications({"schema_version":"1.0","experiment_id":spec["study_id"]+"/replications",
+                               "revision":spec["revision"],"runs":spec["replications"]["runs"],"simulation":simulation_input})
+        checks.append("replication_configuration_and_budget")
+    if spec["reference_suite"] is not None:
+        validate_reference_contract(spec["reference_suite"])
+        if not any(digest(asdict(Scenario.from_dict(case["scenario"])))==expected_binding["scenario_fingerprint"]
+                   for case in spec["reference_suite"]["cases"]):
+            raise ValueError("reference suite does not cover this study scenario")
+        checks.append("reference_contract_and_scenario_coverage")
+    evidence_report=assess_evidence(spec["manufacturing_input"],spec["evidence_policy"]) if "evidence_policy" in optional else None
+    source_report=verify_sources(spec["manufacturing_input"],spec["evidence_snapshot"]) if "evidence_snapshot" in optional else None
+    observation_contract=None
+    if source_report is not None:
+        source_report["combined_eligible_coverage"]={claim:sorted(set(refs)&set(source_report["hash_matched_coverage"][claim]))
+                                                    for claim,refs in evidence_report["eligible_coverage"].items()}
+        source_report["combined_uncovered_requirements"]=sorted(claim for claim,refs in source_report["combined_eligible_coverage"].items() if not refs)
+    if evidence_report is not None:
+        checks.append("evidence_metadata_policy")
+    if source_report is not None:
+        checks.append("captured_source_content")
+    if "observation_checks" in optional:
+        observation_contract=evaluate_observations(spec,None,evidence_report,source_report)
+        checks.append("observation_reference_contract")
+    validation={"status":"VALID","contract":"study","contract_version":"1.0","validator":"AUTHORITATIVE_RUNTIME",
+                "scope":"STUDY_INPUT_PREFLIGHT","study_id":spec["study_id"],"study_fingerprint":digest(spec),
+                "checks":checks,"analysis_executed":False,
+                "evidence_status":evidence_report["status"] if evidence_report is not None else None,
+                "captured_content_status":source_report["status"] if source_report is not None else None,
+                "observation_reference_status":observation_contract["status"] if observation_contract is not None else None,
+                "combined_uncovered_requirements":source_report["combined_uncovered_requirements"] if source_report is not None else None,
+                "limitations":["Contract validity does not imply readiness, feasibility, numeric model success, or approval.",
+                               "Metadata/content gaps remain diagnostic statuses; model/reference comparisons and seeded outcomes are not evaluated."],
+                "production_authorized":False}
+    return {"optional":optional,"package":package,"scenario":scenario,"binding":expected_binding,
+            "simulation_input":simulation_input,"uncertainty_input":uncertainty_input,
+            "evidence_report":evidence_report,"source_report":source_report,"validation":validation}
+
+
+def preflight_study(spec: dict) -> dict:
+    return prepare_study(spec)["validation"]
+
+
+def run_study(spec: dict) -> dict:
+    prepared=prepare_study(spec)
+    optional,package,scenario=prepared["optional"],prepared["package"],prepared["scenario"]
+    expected_binding=prepared["binding"]
+    simulation_input,uncertainty_input=prepared["simulation_input"],prepared["uncertainty_input"]
     batch = simulate_batch(simulation_input)
     exploration = simulate(uncertainty_input)
     replication_report = None
@@ -113,7 +165,7 @@ def run_study(spec: dict) -> dict:
     else:
         findings.append({"code": "SYNTHETIC_REFERENCE_ONLY", "severity": "REVIEW", "component": "references",
                          "message": "Passing synthetic reference checks establish arithmetic agreement, not facility validation."})
-    evidence_report = assess_evidence(spec["manufacturing_input"], spec["evidence_policy"]) if "evidence_policy" in optional else None
+    evidence_report = prepared["evidence_report"]
     if evidence_report is not None:
         if evidence_report["uncovered_requirements"]:
             findings.append({"code": "EVIDENCE_COVERAGE_GAPS", "severity": "BLOCKING", "component": "evidence",
@@ -125,12 +177,8 @@ def run_study(spec: dict) -> dict:
                          "message": "Evidence policy checks do not verify source identity, content hashes, claim truth, or substantive conformance."})
     source_report = None
     if "evidence_snapshot" in optional:
-        source_report = verify_sources(spec["manufacturing_input"], spec["evidence_snapshot"])
-        combined = {claim: sorted(set(refs) & set(source_report["hash_matched_coverage"][claim]))
-                    for claim, refs in evidence_report["eligible_coverage"].items()}
-        source_report["combined_eligible_coverage"] = combined
-        gaps = sorted(claim for claim, refs in combined.items() if not refs)
-        source_report["combined_uncovered_requirements"] = gaps
+        source_report = prepared["source_report"]
+        gaps = source_report["combined_uncovered_requirements"]
         if gaps:
             findings.append({"code": "EVIDENCE_SOURCE_GAPS", "severity": "BLOCKING", "component": "sources",
                              "message": "Requirements lack a single record with both eligible metadata and matching captured content: "+", ".join(gaps)})

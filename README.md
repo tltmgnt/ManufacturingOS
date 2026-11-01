@@ -394,3 +394,15 @@ python tests/check_exported_schemas.py
 ```
 
 The validator is not a runtime requirement. The isolated wheel test confirms the JSON assets are included and that export/validation work without it.
+
+## Study input preflight without analysis
+
+```sh
+manufacturing-os schema validate study examples/observation-study.json
+```
+
+Study preflight checks the exact input contract, version/content bindings, demand/target agreement, simulation options/calendars/resource limits, uncertainty ranges/endpoints, replication settings/budgets, reference-suite structure and scenario coverage, evidence policy, captured bytes, and optional observation-reference contract/context. It does not run agents, create random generators, schedule jobs, calculate cost/capacity, compare model results to references, or generate study outputs. `analysis_executed` remains `false`.
+
+The `VALID` result means input preflight completed, not that a plan is feasible or ready. Evidence freshness/content gaps and unavailable/mismatched observation references remain explicit diagnostic statuses, including combined metadata-and-content coverage gaps. A reference can be structurally valid even when its numeric values will disagree with the model; those comparisons are deliberately not evaluated. Model arithmetic, seeded outcomes, readiness, and approvals still require the actual study/review workflow.
+
+Execution now uses the same preparation/validation path before analysis, catching late configuration errors before simulations allocate timelines or run samples. Metadata/content checks are reused by execution. Successful study serialization and existing valid bundle contents remain unchanged; malformed inputs can surface errors earlier. The command uses strict JSON ingestion and exits `2` for malformed contracts/bindings/options. It writes no run files. There is no exported structural study schema yet: `schema export` remains limited to the two core schemas, while `schema validate study` performs authoritative runtime preflight.

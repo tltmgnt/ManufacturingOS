@@ -8,7 +8,7 @@ from .jsonio import read_json
 from .calculations import Scenario,fields,nonempty,quantity
 from .experiments import percentile
 from .models import digest
-from .simulation import parse_downtime,simulate_batch
+from .simulation import parse_downtime,simulate_batch,validate_simulation
 
 REPLICATION_VERSION = "seeded-batch-replications-1.0"
 MAX_WORK = 2000000
@@ -26,6 +26,7 @@ def validate_experiment(spec: dict) -> None:
     template = spec["simulation"]
     if not isinstance(template,dict):
         raise ValueError("simulation template must be an object")
+    validate_simulation(template)
     scenario = Scenario.from_dict(template.get("scenario"))
     size,seed = template.get("batch_size"),template.get("seed")
     if type(size) is not int or not 1 <= size <= 10000:

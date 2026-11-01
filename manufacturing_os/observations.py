@@ -13,13 +13,18 @@ METRICS = {"good_by_horizon","scrapped_by_horizon","wip_at_horizon","eventual_go
            "eventual_scrapped_units","batch_completion_time","full_batch_total_cost","full_batch_unit_cost"}
 
 
-def evaluate_observations(spec: dict,replications: dict,metadata: dict,sources: dict) -> dict:
+def evaluate_observations(spec: dict,replications: dict | None,metadata: dict,sources: dict) -> dict:
     config = spec["observation_checks"]
     fields(config,{"evidence_id","tolerances"},"observation checks")
     nonempty(config["evidence_id"],"reference evidence ID")
     evidence_id = config["evidence_id"]
     if not isinstance(config["tolerances"],dict) or not config["tolerances"] or not set(config["tolerances"])<=METRICS:
         raise ValueError("tolerances must be a nonempty supported metric mapping")
+    tolerance_units={key:"piece" for key in METRICS}
+    tolerance_units.update(batch_completion_time="h",full_batch_total_cost=spec["scenario"]["currency"],
+                           full_batch_unit_cost=spec["scenario"]["currency"]+"/good_piece")
+    for metric,tolerance in config["tolerances"].items():
+        measure(tolerance,tolerance_units[metric])
     evidence = next((row for row in spec["manufacturing_input"]["evidence"] if row["evidence_id"]==evidence_id),None)
     if evidence is None:
         raise ValueError("unknown observation reference evidence ID")
@@ -80,10 +85,12 @@ def evaluate_observations(spec: dict,replications: dict,metadata: dict,sources: 
         unit = units[metric]
         observed_value = measure(observed,unit)
         tolerance = measure(tolerances[metric],unit)
-        summary = replications["summary"].get(metric)
+        summary = replications["summary"].get(metric) if replications is not None else None
         check = {"metric":metric,"observed":deepcopy(observed),"absolute_tolerance":deepcopy(tolerances[metric]),
                  "model_mean":None,"residual":None,"status":"FAIL","issue":None}
-        if summary is None:
+        if replications is None:
+            check.update(status="NOT_EVALUATED",issue="Input preflight only; model comparisons were not run.")
+        elif summary is None:
             check["issue"] = "Metric is unavailable in the configured model outputs."
         elif summary["undefined_runs"] or summary["statistics"] is None:
             check["issue"] = "Model metric is undefined in one or more runs; no conditional-mean comparison performed."
@@ -95,7 +102,7 @@ def evaluate_observations(spec: dict,replications: dict,metadata: dict,sources: 
             check.update(model_mean=deepcopy(model),residual=quantity(residual,unit),
                          status="PASS" if abs(residual)<=tolerance else "FAIL")
         result["checks"].append(check)
-    result["status"] = "PASS" if all(check["status"]=="PASS" for check in result["checks"]) else "FAIL"
+    result["status"] = "REFERENCE_CONTRACT_VALID" if replications is None else "PASS" if all(check["status"]=="PASS" for check in result["checks"]) else "FAIL"
     return result
 
 

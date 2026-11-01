@@ -106,7 +106,7 @@ def full_batch_costs(scenario: Scenario, size: int, operations: list[dict], good
             "validation_status":"UNVALIDATED_ESTIMATE","production_authorized":False}
 
 
-def simulate_batch(spec: dict) -> dict:
+def validate_simulation(spec: dict) -> tuple:
     optional = set(spec) & {"downtime", "include_costs"} if isinstance(spec, dict) else set()
     fields(spec, {"schema_version", "simulation_id", "revision", "seed", "batch_size", "scenario"} | optional, "batch simulation")
     if "include_costs" in optional and type(spec["include_costs"]) is not bool:
@@ -124,6 +124,11 @@ def simulate_batch(spec: dict) -> dict:
     if size * len(scenario.operations) > 100000 or sum(op.machines for op in scenario.operations) > 10000:
         raise ValueError("simulation exceeds 100000 job-operations or 10000 machines")
     calendars, normalized_downtime = parse_downtime(spec.get("downtime", []), scenario, size)
+    return optional,scenario,size,calendars,normalized_downtime
+
+
+def simulate_batch(spec: dict) -> dict:
+    optional,scenario,size,calendars,normalized_downtime = validate_simulation(spec)
     rng = random.Random(spec["seed"])
     horizon = scenario.horizon_hours
     arrivals = [(0.0, job) for job in range(size)]
