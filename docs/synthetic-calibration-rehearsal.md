@@ -52,7 +52,7 @@ parameter; this checks that held-out values do not drive fitting.
 ## Review artifacts and limits
 
 CI runs the rehearsal across Python 3.11–3.13 and uploads the entire directory as
-`synthetic-calibration-rehearsal-python-VERSION`. Open each case's
+`synthetic-pilot-rehearsal-python-VERSION`. Open each case's
 `study-review.html` and inspect `rehearsal-summary.json` for the paired residuals.
 
 Retain the whole directory: individual study ZIPs contain held-out source evidence
@@ -64,3 +64,5 @@ source overlap and temporal dependence require qualified review with real data.
 The actual calibration milestone still requires approved facility records,
 representative measurement definitions, sufficient data, independently justified
 thresholds, uncertainty treatment, untouched validation and qualified acceptance.
+
+The consolidated artifact stores this component under `calibration/`. Open the top-level `index.html` to review the entire rehearsal.

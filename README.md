@@ -4,6 +4,18 @@
 
 See [release notes](CHANGELOG.md) for the delivered scope and known limits, and [the roadmap](roadmap.md) for the remaining milestones.
 
+## Run the complete temporary rehearsal
+
+```sh
+python -m examples.temporary_pilot --output runs/temporary-pilot
+```
+
+Open `runs/temporary-pilot/index.html` for planning cases, synthetic CSV intake,
+and separate fitting/held-out results in one review. See the
+[rehearsal guide](docs/temporary-pilot-rehearsal.md). This uses synthetic local
+fixtures only; real calibration, enterprise integration and shadow-pilot
+acceptance remain open.
+
 ## Try a temporary use case
 
 A [synthetic bracket demo](docs/temporary-use-case.md) runs reference agreement,

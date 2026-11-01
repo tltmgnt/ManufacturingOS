@@ -88,7 +88,7 @@ target-miss case must retain its shortfall finding despite reference agreement. 
 the +5 USD residual, loss of the disagreement review requirement, production
 authorization, or invalid bundle causes the runner to fail.
 
-Each matrix job uploads `synthetic-bracket-demo-python-VERSION` with the summary,
+Each matrix job uploads `synthetic-pilot-rehearsal-python-VERSION` with the summary,
 case inputs, reports, HTML reviews, ZIP bundles and verification records. Download
 it from the GitHub Actions run and open the case HTML files locally. Artifacts
 contain synthetic data only and follow the repository's default retention period.
@@ -100,8 +100,8 @@ Chromium. It loads the offline comparison at widths 375, 768 and 1440, checks
 case outcomes and viewport overflow, checks local links, and follows each case's
 review link in Chromium. External HTTP/HTTPS requests are blocked.
 
-The `synthetic-demo-browser-review` artifact includes seven screenshots (three
-comparison widths and four full case reviews) plus the generated demo files.
+The `synthetic-demo-browser-review` artifact includes ten screenshots (three
+combined-review widths, three planning-comparison widths and four full case reviews) plus the generated demo files.
 Automated browser checks do not replace human visual review of those screenshots.
 Failures retain available files for diagnosis.
 
@@ -110,9 +110,11 @@ To reproduce from the repository root:
 ```sh
 python -m pip install -r requirements-browser-tests.txt
 python -m playwright install chromium
-python -m examples.temporary_use_case --output runs/browser-demo
+python -m examples.temporary_pilot --output runs/browser-pilot
 python tests/check_demo_browser.py
 ```
 
 Use fresh output directories. The browser dependencies are not installed with
 the ManufacturingOS runtime package.
+
+The consolidated artifact stores this component under `planning/`. Open the top-level `index.html` to review the entire rehearsal.

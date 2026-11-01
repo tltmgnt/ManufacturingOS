@@ -14,27 +14,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: python -m unittest discover -s tests -v
-      - name: Run temporary synthetic baseline and disagreement cases
-        run: python -m examples.temporary_use_case --output runs/temporary-bracket-demo
+      - name: Run consolidated synthetic pilot rehearsal
+        run: python -m examples.temporary_pilot --output runs/temporary-pilot
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: synthetic-bracket-demo-python-${{ matrix.python-version }}
-          path: runs/temporary-bracket-demo/
-          if-no-files-found: error
-      - name: Rehearse read-only synthetic batch export intake
-        run: python -m examples.synthetic_export_intake --output runs/synthetic-export-intake
-      - uses: actions/upload-artifact@v4
-        with:
-          name: synthetic-export-intake-python-${{ matrix.python-version }}
-          path: runs/synthetic-export-intake/
-          if-no-files-found: error
-      - name: Rehearse synthetic fitting and held-out evaluation
-        run: python -m examples.synthetic_calibration_rehearsal --output runs/synthetic-calibration-rehearsal
-      - uses: actions/upload-artifact@v4
-        with:
-          name: synthetic-calibration-rehearsal-python-${{ matrix.python-version }}
-          path: runs/synthetic-calibration-rehearsal/
-          if-no-files-found: error
+          name: synthetic-pilot-rehearsal-python-${{ matrix.python-version }}
+          path: runs/temporary-pilot/
+          if-no-files-found: warn
       - run: python -m manufacturing_os examples/synthetic-cnc.json
       - run: python -m manufacturing_os.calculations examples/serial-route.json --variants examples/serial-route-variants.json
       - run: python -m manufacturing_os.experiments validate examples/arithmetic-references.json
@@ -152,11 +139,11 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -r requirements-browser-tests.txt
       - run: python -m playwright install --with-deps chromium
-      - run: python -m examples.temporary_use_case --output runs/browser-demo
+      - run: python -m examples.temporary_pilot --output runs/browser-pilot
       - run: python tests/check_demo_browser.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: synthetic-demo-browser-review
-          path: runs/browser-demo/
+          path: runs/browser-pilot/
           if-no-files-found: warn
