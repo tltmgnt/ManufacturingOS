@@ -36,6 +36,12 @@ def main():
             assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), "Page overflows viewport"
             for href in page.locator("a").evaluate_all("links => links.map(link => link.getAttribute('href'))"):
                 assert (root / href).is_file(), f"Missing local link: {href}"
+            for cell in page.locator("tbody td").all():
+                box = cell.bounding_box()
+                assert box and box["x"] >= 0 and box["x"] + box["width"] <= width, "Case cell clipped off-screen"
+            page.locator('a[href="target-miss/study-review.html"]').scroll_into_view_if_needed()
+            assert page.locator('a[href="target-miss/study-review.html"]').is_visible()
+            page.evaluate("window.scrollTo(0, 0)")
             page.screenshot(path=str(screenshots / f"comparison-{width}.png"), full_page=True)
         page.set_viewport_size({"width": 1440, "height": 900})
         for case in ("baseline", "cost-disagreement", "target-miss"):

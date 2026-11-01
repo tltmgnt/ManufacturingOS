@@ -33,10 +33,13 @@ def render_summary(summary):
                   "Met" if case["target_met"] else "MISSED",
                   f'{cost["model_mean"]["value"]:g} / {cost["observed"]["value"]:g}',
                   f'{cost["residual"]["value"]:+g}', case["review_state"]]
-        cells = "".join("<td>" + escape(str(value)) + "</td>" for value in values)
-        rows.append("<tr>" + cells + f'<td><a href="{path}/study-review.html">Review</a> · '
+        labels = ["Case", "Reference", "Good / target at 5 h", "Target",
+                  "Model / reference cost (USD)", "Cost residual (USD)", "Review state"]
+        cells = "".join('<td data-label="' + escape(label, quote=True) + '"><span>' +
+                        escape(str(value)) + '</span></td>' for label, value in zip(labels, values))
+        rows.append("<tr>" + cells + f'<td data-label="Files"><span><a href="{path}/study-review.html">Review</a> · '
                     f'<a href="{path}/study-report.json">JSON</a> · '
-                    f'<a href="{path}/study-review.zip">Bundle</a></td></tr>')
+                    f'<a href="{path}/study-review.zip">Bundle</a></span></td></tr>')
     return """<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -48,6 +51,15 @@ h1 {line-height:1.2} .notice {background:#fff0c2;border-left:5px solid #946200;p
 th,td {padding:.8rem;text-align:left;border-bottom:1px solid #ccd4df;vertical-align:top}
 th {background:#e6edf5} a {color:#124e96} a:focus {outline:3px solid #946200}
 caption {text-align:left;font-weight:600;margin:1rem 0} small {color:#374c65}
+@media (max-width: 1000px) {
+ .scroll {overflow:visible} table,caption,tbody,tr {display:block}
+ thead {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+ tbody tr {margin:1rem 0;border:1px solid #ccd4df;border-radius:.4rem;overflow:hidden}
+ td {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:.8rem}
+ td::before {content:attr(data-label);font-weight:600}
+ td span {min-width:0;overflow-wrap:anywhere} td:first-child {background:#e6edf5}
+ caption {width:auto} td:last-child {border-bottom:0}
+}
 </style></head><body>
 <h1>Synthetic bracket demo</h1>
 <p class="notice"><strong>Synthetic data only.</strong> Empirical calibration is incomplete.
