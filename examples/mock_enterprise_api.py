@@ -2,11 +2,13 @@
 import argparse
 from contextlib import contextmanager
 import hashlib
+import hmac
 from http.client import HTTPConnection
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
 import re
+import secrets
 import threading
 
 from .synthetic_export_intake import parse_export, run_intake_bytes
@@ -17,8 +19,18 @@ SOURCE_REVISION = "synthetic-export-1"
 MAX_EXPORT_BYTES = 65536
 
 
-def handler_for(raw: bytes, audit: list):
+def validate_token(token):
+    if not isinstance(token, str) or not re.fullmatch(r"[A-Za-z0-9_-]{32,128}", token):
+        raise ValueError("Mock token must contain 32–128 URL-safe characters")
+
+
+def handler_for(raw: bytes, audit: list, read_token: str, denied_token: str | None = None):
     """Immutable fixture responses; write methods never touch a source."""
+    validate_token(read_token)
+    if denied_token is not None:
+        validate_token(denied_token)
+        if hmac.compare_digest(read_token, denied_token):
+            raise ValueError("Read and denied-scope tokens must be distinct")
     class Handler(BaseHTTPRequestHandler):
         server_version = "SyntheticERP/1"
         sys_version = ""
@@ -32,6 +44,8 @@ def handler_for(raw: bytes, audit: list):
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Cache-Control", "no-store")
+            if status == 401:
+                self.send_header("WWW-Authenticate", "Bearer")
             if status == 405:
                 self.send_header("Allow", "GET")
             if status == 200 and self.path == EXPORT_PATH:
@@ -41,7 +55,26 @@ def handler_for(raw: bytes, audit: list):
             if self.command != "HEAD":
                 self.wfile.write(body)
 
+        def authorize_read(self):
+            headers = self.headers.get_all("Authorization", [])
+            if len(headers) != 1 or headers[0][:7].lower() != "bearer ":
+                self.respond(401, b'{"error":"mock read credential required"}\n')
+                return False
+            supplied = headers[0][len("Bearer "):]
+            if not re.fullmatch(r"[A-Za-z0-9_-]{32,128}", supplied):
+                self.respond(401, b'{"error":"invalid mock credential"}\n')
+                return False
+            if hmac.compare_digest(supplied, read_token):
+                return True
+            if denied_token is not None and hmac.compare_digest(supplied, denied_token):
+                self.respond(403, b'{"error":"mock credential lacks exports:read scope"}\n')
+            else:
+                self.respond(401, b'{"error":"invalid mock credential"}\n')
+            return False
+
         def do_GET(self):
+            if not self.authorize_read():
+                return
             if self.path == EXPORT_PATH:
                 self.respond(200, raw, "text/csv; charset=utf-8")
             else:
@@ -55,9 +88,9 @@ def handler_for(raw: bytes, audit: list):
 
 
 @contextmanager
-def mock_server(raw: bytes):
+def mock_server(raw: bytes, *, read_token: str, denied_token: str | None = None):
     audit = []
-    server = ThreadingHTTPServer(("127.0.0.1", 0), handler_for(raw, audit))
+    server = ThreadingHTTPServer(("127.0.0.1", 0), handler_for(raw, audit, read_token, denied_token))
     server.daemon_threads = True
     thread = threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.05}, daemon=True)
     thread.start()
@@ -69,13 +102,14 @@ def mock_server(raw: bytes):
         thread.join(timeout=3)
 
 
-def fetch_export(port: int) -> tuple[bytes, dict]:
-    # Host/path are fixed: no external URL, proxy, credentials or redirect support.
+def fetch_export(port: int, token: str) -> tuple[bytes, dict]:
+    # Host/path are fixed; only an ephemeral mock token is accepted, never a real credential.
     if type(port) is not int or not 1 <= port <= 65535:
         raise ValueError("Mock API port must be an integer from 1 to 65535")
+    validate_token(token)
     connection = HTTPConnection("127.0.0.1", port, timeout=3)
     try:
-        connection.request("GET", EXPORT_PATH, headers={"Accept": "text/csv"})
+        connection.request("GET", EXPORT_PATH, headers={"Accept": "text/csv", "Authorization": "Bearer " + token})
         response = connection.getresponse()
         if response.status != 200:
             raise ValueError(f"Mock export failed with HTTP {response.status}; no redirect or retry performed")
@@ -99,8 +133,9 @@ def fetch_export(port: int) -> tuple[bytes, dict]:
                      "path": EXPORT_PATH, "status": 200, "source_revision": SOURCE_REVISION,
                      "received_bytes": len(raw), "sha256": content_hash,
                      "source_authenticated": False, "live_integration_complete": False,
+                     "access_control": "EPHEMERAL_MOCK_BEARER", "required_scope": "exports:read",
                      "production_authorized": False,
-                     "limitations": ["Loopback HTTP fixture only; no TLS, credentials, identity or authorization review.",
+                     "limitations": ["Loopback HTTP and an ephemeral mock token only; no TLS, real identity or enterprise authorization review.",
                                      "Pinned revision and ETag check supplied-source consistency, not origin authenticity."]}
     finally:
         connection.close()
@@ -111,8 +146,9 @@ def run_api_rehearsal(output: Path) -> dict:
     if output.exists() or output.is_symlink():
         raise FileExistsError("Output path already exists")
     raw_fixture = (Path(__file__).resolve().parent / "synthetic-batch-export.csv").read_bytes()
-    with mock_server(raw_fixture) as (port, audit):
-        received, transport = fetch_export(port)
+    read_token = secrets.token_urlsafe(32)
+    with mock_server(raw_fixture, read_token=read_token) as (port, audit):
+        received, transport = fetch_export(port, read_token)
     result = run_intake_bytes(received, output)
     if result["raw_sha256"] != transport["sha256"]:
         raise RuntimeError("Transport and retained intake bytes differ")

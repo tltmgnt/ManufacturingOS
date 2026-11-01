@@ -8,9 +8,13 @@ from pathlib import Path
 import tempfile
 import threading
 import unittest
+from zipfile import ZipFile
 from unittest.mock import patch
 
 from examples.mock_enterprise_api import EXPORT_PATH, SOURCE_REVISION, fetch_export, mock_server, run_api_rehearsal
+
+TOKEN = "r" * 43
+DENIED_TOKEN = "d" * 43
 
 RAW = (Path(__file__).resolve().parents[1] / "examples/synthetic-batch-export.csv").read_bytes()
 
@@ -41,15 +45,15 @@ def response_server(status=200, **changes):
 
 class MockEnterpriseAPITests(unittest.TestCase):
     def test_real_get_preserves_bytes_and_records_only_read_request(self):
-        with mock_server(RAW) as (port, audit):
-            received, provenance = fetch_export(port)
+        with mock_server(RAW, read_token=TOKEN) as (port, audit):
+            received, provenance = fetch_export(port, TOKEN)
         self.assertEqual(received, RAW)
         self.assertEqual(provenance["sha256"], hashlib.sha256(RAW).hexdigest())
         self.assertFalse(provenance["source_authenticated"])
         self.assertEqual(audit, [{"method": "GET", "path": EXPORT_PATH, "status": 200}])
 
     def test_write_methods_are_rejected_and_export_is_unchanged(self):
-        with mock_server(RAW) as (port, audit):
+        with mock_server(RAW, read_token=TOKEN) as (port, audit):
             for method in ("POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"):
                 connection = HTTPConnection("127.0.0.1", port, timeout=2)
                 try:
@@ -60,15 +64,15 @@ class MockEnterpriseAPITests(unittest.TestCase):
                     response.read()
                 finally:
                     connection.close()
-            self.assertEqual(fetch_export(port)[0], RAW)
+            self.assertEqual(fetch_export(port, TOKEN)[0], RAW)
         self.assertEqual(len(audit), 7)
         self.assertTrue(all(row["status"] == 405 for row in audit[:6]))
 
     def test_unknown_route_is_not_a_source_selector(self):
-        with mock_server(RAW) as (port, audit):
+        with mock_server(RAW, read_token=TOKEN) as (port, audit):
             connection = HTTPConnection("127.0.0.1", port, timeout=2)
             try:
-                connection.request("GET", EXPORT_PATH + "?source=other")
+                connection.request("GET", EXPORT_PATH + "?source=other", headers={"Authorization": "Bearer " + TOKEN})
                 response = connection.getresponse()
                 self.assertEqual(response.status, 404)
                 response.read()
@@ -79,7 +83,7 @@ class MockEnterpriseAPITests(unittest.TestCase):
         for status in (301, 302, 401, 403, 429, 500, 503):
             with self.subTest(status=status), response_server(status=status) as port:
                 with self.assertRaisesRegex(ValueError, f"HTTP {status}"):
-                    fetch_export(port)
+                    fetch_export(port, TOKEN)
 
     def test_invalid_metadata_and_resource_limits_fail(self):
         cases = [{"Content-Type": "application/json"}, {"Content-Length": None},
@@ -89,12 +93,12 @@ class MockEnterpriseAPITests(unittest.TestCase):
         for values in cases:
             with self.subTest(values=values), response_server(**values) as port:
                 with self.assertRaises(ValueError):
-                    fetch_export(port)
+                    fetch_export(port, TOKEN)
 
     def test_synthetic_guard_applies_to_received_response(self):
-        with mock_server(RAW.replace(b"synthetic,demo-batch", b"real,demo-batch")) as (port, audit):
+        with mock_server(RAW.replace(b"synthetic,demo-batch", b"real,demo-batch"), read_token=TOKEN) as (port, audit):
             with self.assertRaisesRegex(ValueError, "synthetic"):
-                fetch_export(port)
+                fetch_export(port, TOKEN)
 
     def test_end_to_end_retains_transport_and_existing_output_is_preserved(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -114,4 +118,64 @@ class MockEnterpriseAPITests(unittest.TestCase):
     def test_invalid_ports_are_rejected_before_transport(self):
         for port in (0, -1, 65536, True, "80"):
             with self.subTest(port=port), self.assertRaises(ValueError):
-                fetch_export(port)
+                fetch_export(port, TOKEN)
+
+
+    def test_missing_invalid_and_insufficient_scope_credentials_are_denied(self):
+        with mock_server(RAW, read_token=TOKEN, denied_token=DENIED_TOKEN) as (port, audit):
+            for value, status in [(None, 401), ("Bearer " + "x" * 43, 401),
+                                  ("Bearer " + DENIED_TOKEN, 403), ("bearer " + TOKEN, 200)]:
+                connection = HTTPConnection("127.0.0.1", port, timeout=2)
+                try:
+                    headers = {} if value is None else {"Authorization": value}
+                    connection.request("GET", EXPORT_PATH, headers=headers)
+                    response = connection.getresponse()
+                    self.assertEqual(response.status, status)
+                    if status == 401:
+                        self.assertEqual(response.getheader("WWW-Authenticate"), "Bearer")
+                    response.read()
+                finally:
+                    connection.close()
+        self.assertEqual([row["status"] for row in audit], [401, 401, 403, 200])
+        self.assertNotIn(TOKEN, json.dumps(audit))
+        self.assertNotIn(DENIED_TOKEN, json.dumps(audit))
+
+    def test_duplicate_authorization_headers_are_rejected(self):
+        with mock_server(RAW, read_token=TOKEN) as (port, audit):
+            connection = HTTPConnection("127.0.0.1", port, timeout=2)
+            try:
+                connection.putrequest("GET", EXPORT_PATH)
+                connection.putheader("Authorization", "Bearer " + TOKEN)
+                connection.putheader("Authorization", "Bearer " + TOKEN)
+                connection.endheaders()
+                response = connection.getresponse()
+                self.assertEqual(response.status, 401)
+                response.read()
+            finally:
+                connection.close()
+
+    def test_previous_run_token_is_not_valid_for_another_server(self):
+        with mock_server(RAW, read_token="n" * 43) as (port, audit):
+            with self.assertRaisesRegex(ValueError, "HTTP 401"):
+                fetch_export(port, TOKEN)
+
+    def test_invalid_client_token_is_rejected_before_transport(self):
+        with patch("examples.mock_enterprise_api.HTTPConnection") as connection:
+            for token in (None, "short", "x" * 129, "x" * 40 + "\r\nX:evil"):
+                with self.subTest(token=token), self.assertRaises(ValueError):
+                    fetch_export(12345, token)
+            connection.assert_not_called()
+
+    def test_ephemeral_token_is_absent_from_all_retained_files_and_bundles(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "api"
+            with patch("examples.mock_enterprise_api.secrets.token_urlsafe", return_value=TOKEN):
+                result = run_api_rehearsal(output)
+            self.assertEqual(result["transport"]["required_scope"], "exports:read")
+            for path in output.rglob("*"):
+                if path.is_file():
+                    self.assertNotIn(TOKEN.encode(), path.read_bytes(), str(path))
+                    if path.suffix == ".zip":
+                        with ZipFile(path) as archive:
+                            for name in archive.namelist():
+                                self.assertNotIn(TOKEN.encode(), archive.read(name), name)
