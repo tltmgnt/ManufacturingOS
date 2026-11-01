@@ -88,3 +88,20 @@ The report includes every scheduled job-operation (arrival, queue wait, start, f
 A hand-calculated three-job fixture has one-hour cutting and two-hour finishing, no setup, full availability, and perfect yield. Cutting finishes at hours 1, 2, 3; finishing at 3, 5, 7. At hour 5, two jobs are good and one remains WIP. Tests cover this fixture, parallel machines, setup delays, queue waits, availability scaling, scrap removal, future-scrap horizon accounting, flow conservation, machine non-overlap, equivalent units, reconstruction, input limits, and CLI no-overwrite behavior.
 
 Simulation is bounded to 10,000 initial jobs, 100,000 job-operations, and 10,000 total machines. Invalid input or I/O errors exit `2`; successful simulation exits `0` even if the target is missed. The model excludes transfer times, shared labor/resources, rework, finite buffers, shifts, maintenance calendars, and costs. It does not replace the separate steady-state economic model. Synthetic schedule tests check implementation behavior; real facility calibration and validation remain outstanding.
+
+## Integrated revision-bound study
+
+```sh
+python -m manufacturing_os.study examples/integrated-study.json
+python -m manufacturing_os.study examples/integrated-study.json --output study-report.json
+```
+
+A study collects the Phase 1 mock plan, steady-state estimate, finite-batch simulation, uncertainty experiment, and optional synthetic reference report in one reconstructable JSON record. All model components receive the same scenario. Simulation configuration contains only `seed` and `batch_size`; uncertainty configuration contains only `seed`, `samples`, and `ranges`. They cannot override the bound scenario.
+
+The study contract includes an explicit binding to the manufacturing input fingerprint and normalized scenario fingerprint. If either changes, execution rejects the stale binding before analysis. After reviewing the changed inputs, callers can explicitly compute a new binding with `manufacturing_os.study.binding(package_dict, scenario_dict)`. This content binding records an association; it does not prove that the supplied process route or assumptions accurately represent the product. Qualified reviewers must establish that correspondence. Study demand must use `piece` and equal the scenario's integer good-unit target; calendar demand conversion is deliberately left to the caller.
+
+The reference suite may be `null`. When supplied, at least one reference case must cover the exact normalized study scenario; an unrelated passing suite is rejected. Missing references and unvalidated/mock components remain explicit review findings. Plan verification failures, model capacity shortfalls, simulated target misses, or failed reference checks produce `REVISION_REQUIRED`. Otherwise the study ends at `HUMAN_REVIEW`, with approvals pending and `production_authorized: false`. The original plan verification result and conflicts remain intact; modeled shortfalls are separately labeled with their component and assumptions.
+
+Every report stores the original study input, component versions/fingerprints, all component outputs, review findings, and required approval roles. Re-running its `input` reconstructs the deterministic report. Optional output uses exclusive creation, preserving existing files. Exit codes are `0` for a completed study needing human review, `1` for revision-required findings, and `2` for invalid/stale input or I/O errors. A zero exit code grants no release authority.
+
+The integrated synthetic example binds 72 pieces of demand to the serial-route scenario, runs the 100-job seed-42 simulation and 100 uncertainty samples, and checks the 12 synthetic reference metrics. This connects the existing modules without replacing mock specialist conclusions, granting approvals, or adding enterprise/equipment interfaces. Real facility calibration remains outstanding.
