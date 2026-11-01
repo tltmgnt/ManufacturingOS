@@ -21,6 +21,7 @@ remain repository modules rather than installed runtime CLI commands.
 | --- | --- |
 | `index.html` | Combined review and explicit open real-world milestones |
 | `rehearsal-scorecard.json` | Software check results and full component summaries |
+| `source-provenance.json` | Source-file hashes/fingerprint, Git context and Python/platform metadata |
 | `run-status.json` | RUNNING, COMPLETE or FAILED with component phase |
 | `planning/` | Four cases: agreement, discrepancy, shortfall and assumed remedy |
 | `intake/` | Synthetic raw CSV, derived reference, provenance and verified bundle |
@@ -53,3 +54,24 @@ After this rehearsal, real-world progress requires the facility and data-owner
 inputs in the [calibration protocol](calibration-protocol.md), selected enterprise
 systems and identity/access decisions, then an actual shadow-pilot evaluation.
 Synthetic software PASS results do not substitute for those inputs or decisions.
+
+## Source provenance
+
+Each run records hashes of `.py`, `.json` and `.csv` files under `manufacturing_os/`
+and `examples/`, plus `pyproject.toml`. Their sorted fingerprint is copied into
+the scorecard. Python version/implementation and platform/machine are recorded
+separately. Available Git commit and dirty state describe only the captured source
+roots; a missing Git checkout/tool leaves those fields null, not falsely clean.
+
+The run rechecks source hashes before writing its successful scorecard. Source
+changes fail the run and retain its failed phase. Choose output outside the two
+captured source directories (normally under `runs/`) so results do not become
+source inputs. Snapshot files must be regular and not symlinks; per-file and total
+limits are 4 MiB and 16 MiB.
+
+This is local traceability, not signed build provenance or proof that the recorded
+files are exactly the loaded interpreter code. Tests, docs and system libraries
+are outside the source fingerprint. A dirty checkout needs its patch/source files
+preserved separately for reproduction; hashes alone do not recover missing code.
+The project version remains a release label and is not used as a substitute for
+this source fingerprint.
