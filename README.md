@@ -16,6 +16,13 @@ a local read-only mock API, and separate fitting/held-out results in one review.
 fixtures only; real calibration, enterprise integration and shadow-pilot
 acceptance remain open.
 
+For a [fully synthetic repeatability check](docs/offline-repeatability.md), run
+the pilot twice and compare independently verified outputs:
+
+```sh
+python -m examples.offline_repeatability --output runs/offline-repeatability
+```
+
 ## Try a temporary use case
 
 A [synthetic bracket demo](docs/temporary-use-case.md) runs reference agreement,
