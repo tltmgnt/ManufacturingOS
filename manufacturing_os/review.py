@@ -106,6 +106,14 @@ def render_review(report: dict) -> str:
         policy_html += table("Eligible requirement coverage", ["Requirement", "Evidence IDs"], [
             [text(claim), text(", ".join(refs) or "UNCOVERED")] for claim, refs in sorted(policy_result["eligible_coverage"].items())])
         policy_html += "<ul>"+"".join(f"<li>{text(item)}</li>" for item in policy_result["limitations"])+"</ul>"
+    if "source_report" in report:
+        sources = report["source_report"]
+        policy_html += f"<h3>Captured source content: {text(sources['status'])}</h3><p>Snapshot {text(sources['snapshot_id'])}, revision {text(sources['snapshot_revision'])}; {text(sources['captured_total_bytes'])} captured bytes.</p>"
+        policy_html += table("Captured content verification", ["Evidence", "Status", "Bytes", "Declared SHA-256", "Captured SHA-256"], [
+            [text(row["evidence_id"]), text(row["status"]), text(row["captured_size_bytes"]), text(row["declared_sha256"]), text(row["captured_sha256"])] for row in sources["records"]])
+        policy_html += table("Combined metadata and content coverage", ["Requirement", "Evidence IDs"], [
+            [text(claim), text(", ".join(refs) or "UNCOVERED")] for claim,refs in sorted(sources["combined_eligible_coverage"].items())])
+        policy_html += "<ul>"+"".join(f"<li>{text(item)}</li>" for item in sources["limitations"])+"</ul>"
     assumptions = ""
     for title, values in [("Estimate",estimate["assumptions"]),("Finite-batch simulation",batch["assumptions"]),("Uncertainty exploration",uncertainty["limitations"])]:
         assumptions += f"<h3>{text(title)}</h3><ul>"+"".join(f"<li>{text(value)}</li>" for value in values)+"</ul>"

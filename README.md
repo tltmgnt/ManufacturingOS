@@ -18,7 +18,7 @@ manufacturing-os bundle create examples/integrated-study.json --output study-bun
 manufacturing-os bundle verify study-bundle.zip
 ```
 
-On Windows, activate with `.venv\Scripts\activate` instead. Commands are `plan`, `estimate`, `experiment`, `simulate`, `study`, `review`, `compare`, `bundle`, and `evidence`; each supports `--help` and preserves its component's arguments and exit codes. `python -m manufacturing_os.cli` provides the same router. Existing module commands below continue to work, including the original `python -m manufacturing_os INPUT` planning interface.
+On Windows, activate with `.venv\Scripts\activate` instead. Commands are `plan`, `estimate`, `experiment`, `simulate`, `study`, `review`, `compare`, `bundle`, `evidence`, and `sources`; each supports `--help` and preserves its component's arguments and exit codes. `python -m manufacturing_os.cli` provides the same router. Existing module commands below continue to work, including the original `python -m manufacturing_os INPUT` planning interface.
 
 The package has no third-party runtime dependencies. Building from source uses setuptools and wheel; pip may fetch build tools in its isolated build environment. To install a downloaded CI wheel offline, use `python -m pip install --no-index --no-deps PATH_TO_WHEEL.whl`. Input examples remain in the source checkout and are not installed as package data; pass your own JSON paths when running elsewhere. The versioned prototype is not published to PyPI by this workflow.
 
@@ -197,3 +197,21 @@ Every requirement must have at least one eligible record naming its ID. Reports 
 Coverage gaps create a blocking study finding and `REVISION_REQUIRED`. Excluded extra records with otherwise complete coverage create a review finding. All policy-enabled studies retain an explicit metadata-only limitation and pending human approval. HTML reviews show policy checks; comparisons flag policy changes; bundles retain and reconstruct the results. UTC `as_of` is part of the input, so runs remain deterministic and do not silently depend on the wall clock.
 
 The standalone command exits `0` for complete coverage (including excluded extra records), `1` for coverage gaps, and `2` for invalid input/policy or I/O errors. Optional output creation is exclusive. The examples are synthetic; no enterprise connector, substantive evidence verifier, or approval authority is added.
+
+## Captured source-content verification
+
+```sh
+manufacturing-os sources examples/source-input.json examples/source-snapshot.json
+manufacturing-os study examples/source-study.json --output source-study-report.json
+manufacturing-os bundle create examples/source-study.json --output source-study-bundle.zip
+```
+
+The source snapshot contract contains a schema version, snapshot ID/revision, the exact ManufacturingInput fingerprint, and a list of evidence IDs with canonical base64-encoded captured bytes. It is bounded to 1,000 files and 16 MiB total decoded content. Unknown/duplicate IDs, stale input bindings, malformed or noncanonical base64, and resource-limit violations are rejected. Empty binary content is supported. Source URIs remain labels; no source URI or path is opened, fetched, or executed.
+
+For each input evidence record, the verifier compares captured-byte SHA-256 with the declared raw 64-character hexadecimal hash (case-insensitive). Reports distinguish `HASH_MATCHED`, `HASH_MISMATCH`, missing captured content, and missing/invalid declared hashes. They retain source revisions, expected/actual hashes, byte counts, snapshot/input fingerprints, and per-requirement hash-matched coverage. Complete coverage with unmatched extra records is labeled `CAPTURED_CONTENT_COVERED_WITH_EXCLUSIONS`.
+
+A study can opt in with `evidence_snapshot`, which requires `evidence_policy`. Combined eligible coverage is the intersection of metadata-eligible and hash-matched evidence IDs for each requirement. The same record must meet both checks; fresh metadata on one record cannot be combined with matching bytes on another stale record. Combined gaps produce `EVIDENCE_SOURCE_GAPS` and `REVISION_REQUIRED`. Missing source snapshots preserve existing study behavior. Hash matches do not override freshness, pinned metadata, hard constraints, or pending approvals.
+
+The exact supplied source bytes remain base64-encoded in the study input and therefore travel with the JSON report, HTML provenance input, and bundle. They are not rendered or interpreted as documents. Verification checks supplied-byte consistency with supplied declarations; it does not authenticate origin, prove claim truth, or establish manufacturing conformance. Source content and policy results are separate components in the HTML report, and comparisons flag snapshot changes.
+
+The standalone command exits `0` when every requirement has hash-matched coverage (including excluded extras), `1` for content coverage gaps, and `2` for invalid/stale inputs or I/O errors. Optional output creation is exclusive. The installed-wheel smoke test covers the new command; CI also builds, verifies, and uploads a synthetic source-backed review bundle.

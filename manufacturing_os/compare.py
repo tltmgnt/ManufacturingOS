@@ -71,6 +71,8 @@ def compare_studies(before: dict, after: dict) -> dict:
         "REFERENCE_SUITE_CHANGED": (first["reference_suite"], second["reference_suite"]),
         **({"EVIDENCE_POLICY_CHANGED": (first.get("evidence_policy"), second.get("evidence_policy"))}
            if "evidence_policy" in first or "evidence_policy" in second else {}),
+        **({"EVIDENCE_SNAPSHOT_CHANGED": (first.get("evidence_snapshot"), second.get("evidence_snapshot"))}
+           if "evidence_snapshot" in first or "evidence_snapshot" in second else {}),
     }
     for code, (left, right) in contexts.items():
         if digest(left) != digest(right):

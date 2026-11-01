@@ -10,6 +10,7 @@ from .evidence import assess_evidence
 from .experiments import simulate, validate_references
 from .models import ManufacturingInput, digest
 from .simulation import simulate_batch
+from .sources import verify_sources
 
 STUDY_VERSION = "integrated-study-1.0"
 
@@ -21,9 +22,11 @@ def binding(package: dict, scenario: dict) -> dict:
 
 
 def run_study(spec: dict) -> dict:
-    optional = {"evidence_policy"} if isinstance(spec, dict) and "evidence_policy" in spec else set()
+    optional = set(spec) & {"evidence_policy", "evidence_snapshot"} if isinstance(spec, dict) else set()
     fields(spec, {"schema_version", "study_id", "revision", "manufacturing_input", "scenario", "binding",
                   "simulation", "uncertainty", "reference_suite"} | optional, "study")
+    if "evidence_snapshot" in optional and "evidence_policy" not in optional:
+        raise ValueError("evidence_snapshot requires evidence_policy")
     if spec["schema_version"] != "1.0":
         raise ValueError("unsupported study schema")
     for key in ("study_id", "revision"):
@@ -80,7 +83,7 @@ def run_study(spec: dict) -> dict:
     else:
         findings.append({"code": "SYNTHETIC_REFERENCE_ONLY", "severity": "REVIEW", "component": "references",
                          "message": "Passing synthetic reference checks establish arithmetic agreement, not facility validation."})
-    evidence_report = assess_evidence(spec["manufacturing_input"], spec["evidence_policy"]) if optional else None
+    evidence_report = assess_evidence(spec["manufacturing_input"], spec["evidence_policy"]) if "evidence_policy" in optional else None
     if evidence_report is not None:
         if evidence_report["uncovered_requirements"]:
             findings.append({"code": "EVIDENCE_COVERAGE_GAPS", "severity": "BLOCKING", "component": "evidence",
@@ -90,6 +93,22 @@ def run_study(spec: dict) -> dict:
                              "message": "Some records fail metadata checks; every requirement has at least one eligible record."})
         findings.append({"code": "EVIDENCE_METADATA_ONLY", "severity": "REVIEW", "component": "evidence",
                          "message": "Evidence policy checks do not verify source identity, content hashes, claim truth, or substantive conformance."})
+    source_report = None
+    if "evidence_snapshot" in optional:
+        source_report = verify_sources(spec["manufacturing_input"], spec["evidence_snapshot"])
+        combined = {claim: sorted(set(refs) & set(source_report["hash_matched_coverage"][claim]))
+                    for claim, refs in evidence_report["eligible_coverage"].items()}
+        source_report["combined_eligible_coverage"] = combined
+        gaps = sorted(claim for claim, refs in combined.items() if not refs)
+        source_report["combined_uncovered_requirements"] = gaps
+        if gaps:
+            findings.append({"code": "EVIDENCE_SOURCE_GAPS", "severity": "BLOCKING", "component": "sources",
+                             "message": "Requirements lack a single record with both eligible metadata and matching captured content: "+", ".join(gaps)})
+        elif source_report["unmatched_record_count"]:
+            findings.append({"code": "UNMATCHED_CAPTURED_RECORDS", "severity": "REVIEW", "component": "sources",
+                             "message": "Some captured-content records do not match; every requirement has another record meeting both checks."})
+        findings.append({"code": "CAPTURED_CONTENT_ONLY", "severity": "REVIEW", "component": "sources",
+                         "message": "Captured-byte hash matches do not authenticate source origin or establish claim truth or conformance."})
     blocking = any(finding["severity"] == "BLOCKING" for finding in findings)
     result = {"schema_version": "1.0", "study_version": STUDY_VERSION, "study_id": spec["study_id"],
             "study_revision": spec["revision"], "study_fingerprint": digest(spec), "input": deepcopy(spec),
@@ -100,6 +119,8 @@ def run_study(spec: dict) -> dict:
             "production_authorized": False}
     if evidence_report is not None:
         result["evidence_report"] = evidence_report
+    if source_report is not None:
+        result["source_report"] = source_report
     return result
 
 

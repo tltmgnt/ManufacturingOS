@@ -40,10 +40,12 @@ def main():
         version=run([executable,'--version']).strip()
         location=run([python,'-c','import manufacturing_os; print(manufacturing_os.__file__)']).strip()
         assert Path(location).resolve().is_relative_to(environment.resolve()), location
-        for command in ['plan','estimate','experiment','simulate','study','review','compare','bundle','evidence']:
+        for command in ['plan','estimate','experiment','simulate','study','review','compare','bundle','evidence','sources']:
             run([executable,command,'--help'])
         evidence=json.loads(run([executable,'evidence',ROOT/'examples/evidence-input.json',ROOT/'examples/evidence-policy.json']))
         assert evidence['status']=='METADATA_CHECKS_PASSED'
+        sources=json.loads(run([executable,'sources',ROOT/'examples/source-input.json',ROOT/'examples/source-snapshot.json']))
+        assert sources['status']=='CAPTURED_CONTENT_COVERED'
         before=working/'before.json'
         after=working/'after.json'
         review=working/'review.html'

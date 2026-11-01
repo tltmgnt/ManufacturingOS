@@ -14,6 +14,7 @@ COMMANDS = {
     "compare": ("compare", "Compare two reconstructable study reports"),
     "bundle": ("bundle", "Create or verify a portable study bundle"),
     "evidence": ("evidence", "Check evidence freshness and pinned source metadata"),
+    "sources": ("sources", "Verify captured evidence bytes against declared hashes"),
 }
 
 

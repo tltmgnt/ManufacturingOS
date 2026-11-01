@@ -46,3 +46,11 @@ jobs:
           name: synthetic-evidence-review-python-${{ matrix.python-version }}
           path: ci-evidence-bundle.zip
           if-no-files-found: error
+      - run: python -m manufacturing_os.cli sources examples/source-input.json examples/source-snapshot.json
+      - run: python -m manufacturing_os.cli bundle create examples/source-study.json --output ci-source-bundle.zip
+      - run: python -m manufacturing_os.cli bundle verify ci-source-bundle.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-source-review-python-${{ matrix.python-version }}
+          path: ci-source-bundle.zip
+          if-no-files-found: error
