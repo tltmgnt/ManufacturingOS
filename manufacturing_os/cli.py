@@ -16,6 +16,7 @@ COMMANDS = {
     "evidence": ("evidence", "Check evidence freshness and pinned source metadata"),
     "sources": ("sources", "Verify captured evidence bytes against declared hashes"),
     "capture": ("capture", "Capture manifest-selected files into a source snapshot"),
+    "notes": ("notes", "Record or check revision-bound reviewer feedback"),
 }
 
 

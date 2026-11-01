@@ -18,7 +18,7 @@ manufacturing-os bundle create examples/integrated-study.json --output study-bun
 manufacturing-os bundle verify study-bundle.zip
 ```
 
-On Windows, activate with `.venv\Scripts\activate` instead. Commands are `plan`, `estimate`, `experiment`, `simulate`, `study`, `review`, `compare`, `bundle`, `evidence`, `sources`, and `capture`; each supports `--help` and preserves its component's arguments and exit codes. `python -m manufacturing_os.cli` provides the same router. Existing module commands below continue to work, including the original `python -m manufacturing_os INPUT` planning interface.
+On Windows, activate with `.venv\Scripts\activate` instead. Commands are `plan`, `estimate`, `experiment`, `simulate`, `study`, `review`, `compare`, `bundle`, `evidence`, `sources`, `capture`, and `notes`; each supports `--help` and preserves its component's arguments and exit codes. `python -m manufacturing_os.cli` provides the same router. Existing module commands below continue to work, including the original `python -m manufacturing_os INPUT` planning interface.
 
 The package has no third-party runtime dependencies. Building from source uses setuptools and wheel; pip may fetch build tools in its isolated build environment. To install a downloaded CI wheel offline, use `python -m pip install --no-index --no-deps PATH_TO_WHEEL.whl`. Input examples remain in the source checkout and are not installed as package data; pass your own JSON paths when running elsewhere. The versioned prototype is not published to PyPI by this workflow.
 
@@ -230,3 +230,27 @@ Paths must be canonical relative POSIX paths: no absolute/drive paths, traversal
 Secure capture requires POSIX `dir_fd`, `O_NOFOLLOW`, `O_DIRECTORY`, and `O_NONBLOCK` support. It fails explicitly on unsupported platforms rather than falling back to weaker path handling. Existing snapshot verification, studies, exports, and bundles remain portable; Windows users can consume snapshots produced in a supported environment.
 
 All selections are validated and captured before output creation. Existing snapshot output is preserved. The command emits a summary and exits `0` for complete hash coverage, `1` when capture succeeded but declared-hash coverage is incomplete, and `2` for invalid input, unsupported platform, path restrictions, changed files, resource limits, or I/O errors. An exit-1 snapshot is retained for inspection; expected hashes are never silently replaced. Capturing bytes does not authenticate the source or approve any manufacturing claim.
+
+## Revision-bound reviewer feedback
+
+```sh
+manufacturing-os study examples/source-study.json --output annotated-study.json
+manufacturing-os notes check annotated-study.json examples/review-notes.json
+manufacturing-os review annotated-study.json --notes examples/review-notes.json --output annotated-review.html
+manufacturing-os bundle create examples/source-study.json --notes examples/review-notes.json --output annotated-bundle.zip
+```
+
+Create or append a note using an exact study report:
+
+```sh
+manufacturing-os notes add annotated-study.json --note-id note-1 --reviewer "Synthetic reviewer" --role quality --timestamp 2026-11-01T00:00:00Z --disposition COMMENT --comment "Review calibration assumptions" --finding-code UNVALIDATED_MODELS --output notes-v1.json
+manufacturing-os notes add annotated-study.json --notes notes-v1.json --note-id note-2 --reviewer "Synthetic reviewer" --role quality --timestamp 2026-11-01T01:00:00Z --disposition REQUEST_REVISION --comment "Provide facility reference data" --output notes-v2.json
+```
+
+Each log binds to the study fingerprint and entire reconstructed report's content hash. Different study revisions or altered report content reject stale notes. Logs have their own ID and positive integer revision; appending creates a new revision without modifying the input log. Output files are exclusively created. A log supports up to 1,000 unique note IDs and 10,000 characters per comment. Timestamps must be chronological, timezone-aware UTC. Roles must match the study's required approval roles, and optional finding codes must name an integrated study finding.
+
+Dispositions are `COMMENT`, `REQUEST_REVISION`, and `READY_FOR_FORMAL_REVIEW`. Names, roles, timestamps, and statements are supplied declarations, not authenticated identities or signatures. Readiness does not approve a plan. Every request for revision remains recorded against that exact report; later comments/readiness notes cannot erase it. Revised studies require a newly bound log. Formal approval remains outside this annotation workflow.
+
+Assessments distinguish `NOTES_RECORDED` and `REQUESTED_CHANGES`, list request IDs and roles with/without notes, and retain pending approvals and `production_authorized: false`. HTML exports show the feedback after study findings. Bundles optionally carry `review-notes.json` and `review-notes-assessment.json`, reconstruct their contents, and report `notes_state` separately from the original study `review_state`. Neither the plan nor study output is modified by annotations. Existing note-free bundles retain their prior contents.
+
+The notes command exits `0` for comments/readiness only, `1` if any revision request is recorded, and `2` for invalid/stale notes or I/O errors. Exit-1 logs are still saved for review. HTML/bundle generation can succeed for a report with requested changes; inspect `notes_state`. CI and the installed-wheel smoke test exercise annotations, export, and bundle verification.

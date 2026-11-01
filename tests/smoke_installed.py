@@ -40,7 +40,7 @@ def main():
         version=run([executable,'--version']).strip()
         location=run([python,'-c','import manufacturing_os; print(manufacturing_os.__file__)']).strip()
         assert Path(location).resolve().is_relative_to(environment.resolve()), location
-        for command in ['plan','estimate','experiment','simulate','study','review','compare','bundle','evidence','sources','capture']:
+        for command in ['plan','estimate','experiment','simulate','study','review','compare','bundle','evidence','sources','capture','notes']:
             run([executable,command,'--help'])
         evidence=json.loads(run([executable,'evidence',ROOT/'examples/evidence-input.json',ROOT/'examples/evidence-policy.json']))
         assert evidence['status']=='METADATA_CHECKS_PASSED'
@@ -57,9 +57,12 @@ def main():
         bundle=working/'bundle.zip'
         run([executable,'study',ROOT/'examples/integrated-study.json','--output',before])
         run([executable,'study',ROOT/'examples/integrated-study-revised.json','--output',after])
-        run([executable,'review',after,'--output',review])
+        notes=working/'notes.json'
+        run([executable,'notes','add',after,'--note-id','smoke-note','--reviewer','Synthetic reviewer','--role','quality','--timestamp','2026-11-01T00:00:00Z','--comment','Synthetic smoke annotation','--disposition','COMMENT','--output',notes])
+        run([executable,'notes','check',after,notes])
+        run([executable,'review',after,'--notes',notes,'--output',review])
         run([executable,'compare',before,after,'--output',comparison])
-        run([executable,'bundle','create',ROOT/'examples/integrated-study-revised.json','--before',before,'--output',bundle])
+        run([executable,'bundle','create',ROOT/'examples/integrated-study-revised.json','--before',before,'--notes',notes,'--output',bundle])
         verified=json.loads(run([executable,'bundle','verify',bundle]))
         assert verified['status']=='VERIFIED_CONTENT'
         assert verified['production_authorized'] is False

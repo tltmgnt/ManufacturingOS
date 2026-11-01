@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from .models import digest
+from .notes import assess_notes
 from .study import reconstruct_report
 
 EXPORT_VERSION = "html-review-1.0"
@@ -25,7 +26,7 @@ def table(caption: str, headers: list[str], rows: list[list[str]]) -> str:
     return f"<div class=table-wrap><table><caption>{text(caption)}</caption><thead><tr>{heading}</tr></thead><tbody>{body}</tbody></table></div>"
 
 
-def render_review(report: dict) -> str:
+def render_review(report: dict, notes: dict | None = None) -> str:
     reconstruct_report(report)
     package = report["input"]["manufacturing_input"]
     scenario = report["input"]["scenario"]
@@ -125,10 +126,17 @@ def render_review(report: dict) -> str:
         ["Bound scenario fingerprint",text(report["binding"]["scenario_fingerprint"])],
     ])
     approvals = "<ul>"+"".join(f"<li>{text(role)} — pending human review</li>" for role in report["required_approvals"])+"</ul>"
+    notes_html = ""
+    if notes is not None:
+        assessment = assess_notes(report, notes)
+        notes_html = f"<section><h2>Reviewer feedback: {text(assessment['state'])}</h2><p>Names and roles are declared, not authenticated. Notes do not grant approval.</p>"
+        notes_html += table("Revision-bound reviewer notes", ["ID", "Reviewer / role", "UTC timestamp", "Disposition", "Finding", "Comment"], [
+            [text(entry["note_id"]), text(entry["reviewer"])+" / "+text(entry["role"]), text(entry["timestamp"]), text(entry["disposition"]), text(entry["finding_code"] or "Study-wide"), text(entry["comment"])] for entry in notes["entries"]])
+        notes_html += "<ul>"+"".join(f"<li>{text(value)}</li>" for value in assessment["limitations"])+"</ul></section>"
     body = f"""<header><p class=eyebrow>ManufacturingOS · advisory study</p><h1>{text(report['study_id'])}</h1>
 <p class=state>{text(report['review_state'])}</p><p class=notice>Production authorization: FALSE. All approvals remain pending. Models are unvalidated; real facility calibration is outstanding.</p></header>
 <nav aria-label='Report sections'><a href='#findings'>Findings</a><a href='#estimates'>Estimates</a><a href='#batch'>Finite batch</a><a href='#uncertainty'>Uncertainty</a><a href='#references'>References</a><a href='#plan'>Plan</a><a href='#provenance'>Provenance</a></nav>
-<main><section id=findings><h2>Review findings</h2><ul class=findings>{findings_html}</ul>{summary}</section>
+<main><section id=findings><h2>Review findings</h2><ul class=findings>{findings_html}</ul>{summary}</section>{notes_html}
 <section id=estimates><h2>Capacity and cost estimates</h2><p>Expected-value steady-state model; fractional starts are intentional. Costs are estimates in the declared currency.</p>{estimates}{capacity}</section>
 <section id=batch><h2>Finite-batch simulation</h2><p>Seed {text(report['input']['simulation']['seed'])}. This is one seeded outcome. Queue waits and eventual completion include events beyond the horizon.</p>{batch_summary}{queues}</section>
 <section id=uncertainty><h2>Uncertainty exploration</h2><p>{text(uncertainty['sample_count'])} samples; seed {text(report['input']['uncertainty']['seed'])}. {text(uncertainty['feasible_samples'])} sampled scenarios fit steady-state capacity. This fraction is not a calibrated manufacturing risk probability. Percentiles describe sampled model outputs, not confidence intervals.</p>{ranges}{sampled}</section>
@@ -151,9 +159,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Export a reconstructed study report as offline HTML")
     parser.add_argument("report", type=Path)
     parser.add_argument("--output", type=Path, required=True, help="Create a new HTML file; existing files are rejected")
+    parser.add_argument("--notes", type=Path, help="Optional reviewer notes bound to this exact report")
     args = parser.parse_args(argv)
     try:
-        output = render_review(json.loads(args.report.read_text(encoding="utf-8")))
+        output = render_review(json.loads(args.report.read_text(encoding="utf-8")),
+                               json.loads(args.notes.read_text(encoding="utf-8")) if args.notes else None)
         with args.output.open("x", encoding="utf-8") as file:
             file.write(output)
     except (ValueError, TypeError, KeyError, OSError, OverflowError, ZeroDivisionError) as exc:

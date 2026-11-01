@@ -56,3 +56,12 @@ jobs:
           if-no-files-found: error
       - run: python -m manufacturing_os.cli capture examples/source-input.json examples/capture-manifest.json --root examples/source-files --output ci-captured-source.json
       - run: python -m manufacturing_os.cli sources examples/source-input.json ci-captured-source.json
+      - run: python -m manufacturing_os.cli study examples/source-study.json --output ci-annotated-study.json
+      - run: python -m manufacturing_os.cli notes check ci-annotated-study.json examples/review-notes.json
+      - run: python -m manufacturing_os.cli bundle create examples/source-study.json --notes examples/review-notes.json --output ci-annotated-bundle.zip
+      - run: python -m manufacturing_os.cli bundle verify ci-annotated-bundle.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-annotated-review-python-${{ matrix.python-version }}
+          path: ci-annotated-bundle.zip
+          if-no-files-found: error
