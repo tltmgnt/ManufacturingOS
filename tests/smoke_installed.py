@@ -40,7 +40,7 @@ def main():
         version=run([executable,'--version']).strip()
         location=run([python,'-c','import manufacturing_os; print(manufacturing_os.__file__)']).strip()
         assert Path(location).resolve().is_relative_to(environment.resolve()), location
-        for command in ['plan','estimate','experiment','simulate','study','review','compare','bundle','evidence','sources','capture','notes','replicate','observations']:
+        for command in ['plan','estimate','experiment','simulate','study','review','compare','bundle','evidence','sources','capture','notes','replicate','observations','campaign']:
             run([executable,command,'--help'])
         evidence=json.loads(run([executable,'evidence',ROOT/'examples/evidence-input.json',ROOT/'examples/evidence-policy.json']))
         assert evidence['status']=='METADATA_CHECKS_PASSED'
@@ -64,6 +64,8 @@ def main():
         run([executable,'study',ROOT/'examples/observation-study.json','--output',observation_study])
         checked=json.loads(run([executable,'observations',observation_study]))
         assert checked['status']=='PASS' and len(checked['checks'])==6
+        campaign=json.loads(run([executable,'campaign',ROOT/'examples/scenario-campaign.json']))
+        assert campaign['status']=='PASS' and campaign['revision_required_studies']==3
         before=working/'before.json'
         after=working/'after.json'
         review=working/'review.html'

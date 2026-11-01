@@ -19,6 +19,7 @@ COMMANDS = {
     "notes": ("notes", "Record or check revision-bound reviewer feedback"),
     "replicate": ("replications", "Repeat finite-batch simulation across recorded seeds"),
     "observations": ("observations", "Inspect source-backed reference agreement checks"),
+    "campaign": ("campaign", "Evaluate bounded multi-study software expectations"),
 }
 
 

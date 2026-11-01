@@ -1,0 +1,890 @@
+{
+  "schema_version": "1.0",
+  "campaign_id": "synthetic-review-scenarios",
+  "revision": "1",
+  "cases": [
+    {
+      "case_id": "reference-agreement",
+      "study": {
+        "schema_version": "1.0",
+        "study_id": "synthetic-cnc-study",
+        "revision": "observations-1",
+        "manufacturing_input": {
+          "schema_version": "1.0",
+          "package_id": "synthetic-cnc",
+          "revision": "5",
+          "product_id": "demo-bracket",
+          "design_revision": "A",
+          "bom": [
+            {
+              "item_id": "blank",
+              "revision": "A",
+              "quantity": {
+                "value": 1,
+                "unit": "piece"
+              }
+            }
+          ],
+          "requirements": [
+            {
+              "requirement_id": "R1",
+              "description": "Synthetic bracket; drawing review required"
+            }
+          ],
+          "demand": {
+            "value": 2,
+            "unit": "piece"
+          },
+          "facility": {
+            "facility_id": "synthetic-shop",
+            "revision": "1"
+          },
+          "constraints": [
+            {
+              "constraint_id": "machine-envelope",
+              "kind": "hard",
+              "satisfied": null,
+              "issue": "Machine capability evidence is unavailable"
+            }
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "source_uri": "synthetic://hand-calculated-observations",
+              "source_owner": "demo-engineering",
+              "revision": "1",
+              "captured_at": "2026-10-15T00:00:00Z",
+              "evidence_type": "synthetic-observations",
+              "claim_ids": [
+                "R1"
+              ],
+              "content_hash": "4a3aa57257fe389e519b7ce50a6882047f530418e4724b4cc48fb22206612c2c"
+            }
+          ]
+        },
+        "scenario": {
+          "schema_version": "1.0",
+          "scenario_id": "synthetic-hand-reference",
+          "revision": "B",
+          "currency": "USD",
+          "target_good_units": 2,
+          "horizon": {
+            "value": 5,
+            "unit": "h"
+          },
+          "material_cost_per_start": {
+            "value": 5,
+            "unit": "USD/piece"
+          },
+          "source_reference": "synthetic://hand-calculated-serial-route-v1",
+          "assumptions": [
+            "Synthetic arithmetic reference only; no facility calibration."
+          ],
+          "operations": [
+            {
+              "operation_id": "cut",
+              "cycle_time": {
+                "value": 1,
+                "unit": "h"
+              },
+              "setup_time": {
+                "value": 0,
+                "unit": "h"
+              },
+              "machines": 1,
+              "availability": 1,
+              "yield_fraction": 1,
+              "machine_rate": {
+                "value": 20,
+                "unit": "USD/h"
+              },
+              "labor_rate": {
+                "value": 10,
+                "unit": "USD/h"
+              }
+            },
+            {
+              "operation_id": "finish",
+              "cycle_time": {
+                "value": 2,
+                "unit": "h"
+              },
+              "setup_time": {
+                "value": 0,
+                "unit": "h"
+              },
+              "machines": 1,
+              "availability": 1,
+              "yield_fraction": 1,
+              "machine_rate": {
+                "value": 15,
+                "unit": "USD/h"
+              },
+              "labor_rate": {
+                "value": 5,
+                "unit": "USD/h"
+              }
+            }
+          ]
+        },
+        "binding": {
+          "input_fingerprint": "7f6dba0aefb271c67fea20aa3efb7fe902d15d6e3f782725cc89c1b8debb5d56",
+          "scenario_fingerprint": "512ff1ce0ac25749ed0f72a5a10f39d6d1ce50100c844ef976d6331f05f6cf25"
+        },
+        "simulation": {
+          "seed": 42,
+          "batch_size": 3,
+          "include_costs": true
+        },
+        "uncertainty": {
+          "seed": 42,
+          "samples": 2,
+          "ranges": [
+            {
+              "operation_id": "finish",
+              "parameter": "yield_fraction",
+              "low": 0.5,
+              "high": 0.9
+            },
+            {
+              "operation_id": "finish",
+              "parameter": "availability",
+              "low": 0.8,
+              "high": 1
+            },
+            {
+              "operation_id": "cut",
+              "parameter": "cycle_time",
+              "low": 2.5,
+              "high": 3.5
+            }
+          ]
+        },
+        "reference_suite": null,
+        "evidence_policy": {
+          "schema_version": "1.0",
+          "policy_id": "synthetic-review-policy",
+          "revision": "1",
+          "as_of": "2026-11-01T00:00:00Z",
+          "max_age": {
+            "value": 30,
+            "unit": "day"
+          },
+          "require_declared_sha256": true,
+          "sources": [
+            {
+              "source_uri": "synthetic://hand-calculated-observations",
+              "source_owner": "demo-engineering",
+              "revision": "1",
+              "evidence_type": "synthetic-observations"
+            }
+          ]
+        },
+        "evidence_snapshot": {
+          "schema_version": "1.0",
+          "snapshot_id": "synthetic-observation-capture",
+          "revision": "1",
+          "input_fingerprint": "7f6dba0aefb271c67fea20aa3efb7fe902d15d6e3f782725cc89c1b8debb5d56",
+          "files": [
+            {
+              "evidence_id": "E1",
+              "content_base64": "ewogICJjb250ZXh0IjogewogICAgImJhdGNoX3NpemUiOiAzLAogICAgImRlc2lnbl9yZXZpc2lvbiI6ICJBIiwKICAgICJmYWNpbGl0eV9pZCI6ICJzeW50aGV0aWMtc2hvcCIsCiAgICAiZmFjaWxpdHlfcmV2aXNpb24iOiAiMSIsCiAgICAiaG9yaXpvbiI6IHsKICAgICAgInVuaXQiOiAiaCIsCiAgICAgICJ2YWx1ZSI6IDUKICAgIH0sCiAgICAicHJvZHVjdF9pZCI6ICJkZW1vLWJyYWNrZXQiLAogICAgInNjZW5hcmlvX2ZpbmdlcnByaW50IjogIjUxMmZmMWNlMGFjMjU3NDllZDBmNzJhNWExMGYzOWQ2ZDFjZTUwMTAwYzg0NGVmOTc2ZDYzMzFmMDVmNmNmMjUiLAogICAgInNpbXVsYXRpb25fY29uZmlnX2ZpbmdlcnByaW50IjogImExYzBkYTM5NDAzMGJiZTUxZWYwZDQzYzZhMWI3NjE4MTlmNTE3ODU0OWE2Y2MzYTViOTU3OWNmMjI3NjZhMjgiCiAgfSwKICAibWV0cmljcyI6IHsKICAgICJiYXRjaF9jb21wbGV0aW9uX3RpbWUiOiB7CiAgICAgICJ1bml0IjogImgiLAogICAgICAidmFsdWUiOiA3CiAgICB9LAogICAgImV2ZW50dWFsX2dvb2RfdW5pdHMiOiB7CiAgICAgICJ1bml0IjogInBpZWNlIiwKICAgICAgInZhbHVlIjogMwogICAgfSwKICAgICJmdWxsX2JhdGNoX3RvdGFsX2Nvc3QiOiB7CiAgICAgICJ1bml0IjogIlVTRCIsCiAgICAgICJ2YWx1ZSI6IDIyNQogICAgfSwKICAgICJmdWxsX2JhdGNoX3VuaXRfY29zdCI6IHsKICAgICAgInVuaXQiOiAiVVNEL2dvb2RfcGllY2UiLAogICAgICAidmFsdWUiOiA3NQogICAgfSwKICAgICJnb29kX2J5X2hvcml6b24iOiB7CiAgICAgICJ1bml0IjogInBpZWNlIiwKICAgICAgInZhbHVlIjogMgogICAgfSwKICAgICJ3aXBfYXRfaG9yaXpvbiI6IHsKICAgICAgInVuaXQiOiAicGllY2UiLAogICAgICAidmFsdWUiOiAxCiAgICB9CiAgfSwKICAib2JzZXJ2YXRpb25fY291bnQiOiAxLAogICJyZWZlcmVuY2Vfa2luZCI6ICJzeW50aGV0aWMiLAogICJzY2hlbWFfdmVyc2lvbiI6ICIxLjAiCn0K"
+            }
+          ]
+        },
+        "replications": {
+          "runs": 4
+        },
+        "observation_checks": {
+          "evidence_id": "E1",
+          "tolerances": {
+            "good_by_horizon": {
+              "value": 1e-09,
+              "unit": "piece"
+            },
+            "wip_at_horizon": {
+              "value": 1e-09,
+              "unit": "piece"
+            },
+            "eventual_good_units": {
+              "value": 1e-09,
+              "unit": "piece"
+            },
+            "batch_completion_time": {
+              "value": 1e-09,
+              "unit": "h"
+            },
+            "full_batch_total_cost": {
+              "value": 1e-09,
+              "unit": "USD"
+            },
+            "full_batch_unit_cost": {
+              "value": 1e-09,
+              "unit": "USD/good_piece"
+            }
+          }
+        }
+      },
+      "expected_review_state": "HUMAN_REVIEW",
+      "expected_blocking_codes": [],
+      "expected_observation_status": "PASS"
+    },
+    {
+      "case_id": "undersized-batch",
+      "study": {
+        "schema_version": "1.0",
+        "study_id": "synthetic-cnc-study",
+        "revision": "observations-1",
+        "manufacturing_input": {
+          "schema_version": "1.0",
+          "package_id": "synthetic-cnc",
+          "revision": "5",
+          "product_id": "demo-bracket",
+          "design_revision": "A",
+          "bom": [
+            {
+              "item_id": "blank",
+              "revision": "A",
+              "quantity": {
+                "value": 1,
+                "unit": "piece"
+              }
+            }
+          ],
+          "requirements": [
+            {
+              "requirement_id": "R1",
+              "description": "Synthetic bracket; drawing review required"
+            }
+          ],
+          "demand": {
+            "value": 2,
+            "unit": "piece"
+          },
+          "facility": {
+            "facility_id": "synthetic-shop",
+            "revision": "1"
+          },
+          "constraints": [
+            {
+              "constraint_id": "machine-envelope",
+              "kind": "hard",
+              "satisfied": null,
+              "issue": "Machine capability evidence is unavailable"
+            }
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "source_uri": "synthetic://hand-calculated-observations",
+              "source_owner": "demo-engineering",
+              "revision": "1",
+              "captured_at": "2026-10-15T00:00:00Z",
+              "evidence_type": "synthetic-observations",
+              "claim_ids": [
+                "R1"
+              ],
+              "content_hash": "4a3aa57257fe389e519b7ce50a6882047f530418e4724b4cc48fb22206612c2c"
+            }
+          ]
+        },
+        "scenario": {
+          "schema_version": "1.0",
+          "scenario_id": "synthetic-hand-reference",
+          "revision": "B",
+          "currency": "USD",
+          "target_good_units": 2,
+          "horizon": {
+            "value": 5,
+            "unit": "h"
+          },
+          "material_cost_per_start": {
+            "value": 5,
+            "unit": "USD/piece"
+          },
+          "source_reference": "synthetic://hand-calculated-serial-route-v1",
+          "assumptions": [
+            "Synthetic arithmetic reference only; no facility calibration."
+          ],
+          "operations": [
+            {
+              "operation_id": "cut",
+              "cycle_time": {
+                "value": 1,
+                "unit": "h"
+              },
+              "setup_time": {
+                "value": 0,
+                "unit": "h"
+              },
+              "machines": 1,
+              "availability": 1,
+              "yield_fraction": 1,
+              "machine_rate": {
+                "value": 20,
+                "unit": "USD/h"
+              },
+              "labor_rate": {
+                "value": 10,
+                "unit": "USD/h"
+              }
+            },
+            {
+              "operation_id": "finish",
+              "cycle_time": {
+                "value": 2,
+                "unit": "h"
+              },
+              "setup_time": {
+                "value": 0,
+                "unit": "h"
+              },
+              "machines": 1,
+              "availability": 1,
+              "yield_fraction": 1,
+              "machine_rate": {
+                "value": 15,
+                "unit": "USD/h"
+              },
+              "labor_rate": {
+                "value": 5,
+                "unit": "USD/h"
+              }
+            }
+          ]
+        },
+        "binding": {
+          "input_fingerprint": "7f6dba0aefb271c67fea20aa3efb7fe902d15d6e3f782725cc89c1b8debb5d56",
+          "scenario_fingerprint": "512ff1ce0ac25749ed0f72a5a10f39d6d1ce50100c844ef976d6331f05f6cf25"
+        },
+        "simulation": {
+          "seed": 42,
+          "batch_size": 1,
+          "include_costs": true
+        },
+        "uncertainty": {
+          "seed": 42,
+          "samples": 2,
+          "ranges": [
+            {
+              "operation_id": "finish",
+              "parameter": "yield_fraction",
+              "low": 0.5,
+              "high": 0.9
+            },
+            {
+              "operation_id": "finish",
+              "parameter": "availability",
+              "low": 0.8,
+              "high": 1
+            },
+            {
+              "operation_id": "cut",
+              "parameter": "cycle_time",
+              "low": 2.5,
+              "high": 3.5
+            }
+          ]
+        },
+        "reference_suite": null,
+        "evidence_policy": {
+          "schema_version": "1.0",
+          "policy_id": "synthetic-review-policy",
+          "revision": "1",
+          "as_of": "2026-11-01T00:00:00Z",
+          "max_age": {
+            "value": 30,
+            "unit": "day"
+          },
+          "require_declared_sha256": true,
+          "sources": [
+            {
+              "source_uri": "synthetic://hand-calculated-observations",
+              "source_owner": "demo-engineering",
+              "revision": "1",
+              "evidence_type": "synthetic-observations"
+            }
+          ]
+        },
+        "evidence_snapshot": {
+          "schema_version": "1.0",
+          "snapshot_id": "synthetic-observation-capture",
+          "revision": "1",
+          "input_fingerprint": "7f6dba0aefb271c67fea20aa3efb7fe902d15d6e3f782725cc89c1b8debb5d56",
+          "files": [
+            {
+              "evidence_id": "E1",
+              "content_base64": "ewogICJjb250ZXh0IjogewogICAgImJhdGNoX3NpemUiOiAzLAogICAgImRlc2lnbl9yZXZpc2lvbiI6ICJBIiwKICAgICJmYWNpbGl0eV9pZCI6ICJzeW50aGV0aWMtc2hvcCIsCiAgICAiZmFjaWxpdHlfcmV2aXNpb24iOiAiMSIsCiAgICAiaG9yaXpvbiI6IHsKICAgICAgInVuaXQiOiAiaCIsCiAgICAgICJ2YWx1ZSI6IDUKICAgIH0sCiAgICAicHJvZHVjdF9pZCI6ICJkZW1vLWJyYWNrZXQiLAogICAgInNjZW5hcmlvX2ZpbmdlcnByaW50IjogIjUxMmZmMWNlMGFjMjU3NDllZDBmNzJhNWExMGYzOWQ2ZDFjZTUwMTAwYzg0NGVmOTc2ZDYzMzFmMDVmNmNmMjUiLAogICAgInNpbXVsYXRpb25fY29uZmlnX2ZpbmdlcnByaW50IjogImExYzBkYTM5NDAzMGJiZTUxZWYwZDQzYzZhMWI3NjE4MTlmNTE3ODU0OWE2Y2MzYTViOTU3OWNmMjI3NjZhMjgiCiAgfSwKICAibWV0cmljcyI6IHsKICAgICJiYXRjaF9jb21wbGV0aW9uX3RpbWUiOiB7CiAgICAgICJ1bml0IjogImgiLAogICAgICAidmFsdWUiOiA3CiAgICB9LAogICAgImV2ZW50dWFsX2dvb2RfdW5pdHMiOiB7CiAgICAgICJ1bml0IjogInBpZWNlIiwKICAgICAgInZhbHVlIjogMwogICAgfSwKICAgICJmdWxsX2JhdGNoX3RvdGFsX2Nvc3QiOiB7CiAgICAgICJ1bml0IjogIlVTRCIsCiAgICAgICJ2YWx1ZSI6IDIyNQogICAgfSwKICAgICJmdWxsX2JhdGNoX3VuaXRfY29zdCI6IHsKICAgICAgInVuaXQiOiAiVVNEL2dvb2RfcGllY2UiLAogICAgICAidmFsdWUiOiA3NQogICAgfSwKICAgICJnb29kX2J5X2hvcml6b24iOiB7CiAgICAgICJ1bml0IjogInBpZWNlIiwKICAgICAgInZhbHVlIjogMgogICAgfSwKICAgICJ3aXBfYXRfaG9yaXpvbiI6IHsKICAgICAgInVuaXQiOiAicGllY2UiLAogICAgICAidmFsdWUiOiAxCiAgICB9CiAgfSwKICAib2JzZXJ2YXRpb25fY291bnQiOiAxLAogICJyZWZlcmVuY2Vfa2luZCI6ICJzeW50aGV0aWMiLAogICJzY2hlbWFfdmVyc2lvbiI6ICIxLjAiCn0K"
+            }
+          ]
+        },
+        "replications": {
+          "runs": 4
+        }
+      },
+      "expected_review_state": "REVISION_REQUIRED",
+      "expected_blocking_codes": [
+        "SIMULATED_TARGET_MISS"
+      ],
+      "expected_observation_status": null
+    },
+    {
+      "case_id": "reference-disagreement",
+      "study": {
+        "schema_version": "1.0",
+        "study_id": "synthetic-cnc-study",
+        "revision": "observations-1",
+        "manufacturing_input": {
+          "schema_version": "1.0",
+          "package_id": "synthetic-cnc",
+          "revision": "5",
+          "product_id": "demo-bracket",
+          "design_revision": "A",
+          "bom": [
+            {
+              "item_id": "blank",
+              "revision": "A",
+              "quantity": {
+                "value": 1,
+                "unit": "piece"
+              }
+            }
+          ],
+          "requirements": [
+            {
+              "requirement_id": "R1",
+              "description": "Synthetic bracket; drawing review required"
+            }
+          ],
+          "demand": {
+            "value": 2,
+            "unit": "piece"
+          },
+          "facility": {
+            "facility_id": "synthetic-shop",
+            "revision": "1"
+          },
+          "constraints": [
+            {
+              "constraint_id": "machine-envelope",
+              "kind": "hard",
+              "satisfied": null,
+              "issue": "Machine capability evidence is unavailable"
+            }
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "source_uri": "synthetic://hand-calculated-observations",
+              "source_owner": "demo-engineering",
+              "revision": "1",
+              "captured_at": "2026-10-15T00:00:00Z",
+              "evidence_type": "synthetic-observations",
+              "claim_ids": [
+                "R1"
+              ],
+              "content_hash": "2568dbc2f006124a44cf58ed62b56ee53ae52c870689386bf5648327f51abe11"
+            }
+          ]
+        },
+        "scenario": {
+          "schema_version": "1.0",
+          "scenario_id": "synthetic-hand-reference",
+          "revision": "B",
+          "currency": "USD",
+          "target_good_units": 2,
+          "horizon": {
+            "value": 5,
+            "unit": "h"
+          },
+          "material_cost_per_start": {
+            "value": 5,
+            "unit": "USD/piece"
+          },
+          "source_reference": "synthetic://hand-calculated-serial-route-v1",
+          "assumptions": [
+            "Synthetic arithmetic reference only; no facility calibration."
+          ],
+          "operations": [
+            {
+              "operation_id": "cut",
+              "cycle_time": {
+                "value": 1,
+                "unit": "h"
+              },
+              "setup_time": {
+                "value": 0,
+                "unit": "h"
+              },
+              "machines": 1,
+              "availability": 1,
+              "yield_fraction": 1,
+              "machine_rate": {
+                "value": 20,
+                "unit": "USD/h"
+              },
+              "labor_rate": {
+                "value": 10,
+                "unit": "USD/h"
+              }
+            },
+            {
+              "operation_id": "finish",
+              "cycle_time": {
+                "value": 2,
+                "unit": "h"
+              },
+              "setup_time": {
+                "value": 0,
+                "unit": "h"
+              },
+              "machines": 1,
+              "availability": 1,
+              "yield_fraction": 1,
+              "machine_rate": {
+                "value": 15,
+                "unit": "USD/h"
+              },
+              "labor_rate": {
+                "value": 5,
+                "unit": "USD/h"
+              }
+            }
+          ]
+        },
+        "binding": {
+          "input_fingerprint": "3e2c5aece85dc80be3a7dcdb1c467a75bf97e916c26868c74e5668860e99855d",
+          "scenario_fingerprint": "512ff1ce0ac25749ed0f72a5a10f39d6d1ce50100c844ef976d6331f05f6cf25"
+        },
+        "simulation": {
+          "seed": 42,
+          "batch_size": 3,
+          "include_costs": true
+        },
+        "uncertainty": {
+          "seed": 42,
+          "samples": 2,
+          "ranges": [
+            {
+              "operation_id": "finish",
+              "parameter": "yield_fraction",
+              "low": 0.5,
+              "high": 0.9
+            },
+            {
+              "operation_id": "finish",
+              "parameter": "availability",
+              "low": 0.8,
+              "high": 1
+            },
+            {
+              "operation_id": "cut",
+              "parameter": "cycle_time",
+              "low": 2.5,
+              "high": 3.5
+            }
+          ]
+        },
+        "reference_suite": null,
+        "evidence_policy": {
+          "schema_version": "1.0",
+          "policy_id": "synthetic-review-policy",
+          "revision": "1",
+          "as_of": "2026-11-01T00:00:00Z",
+          "max_age": {
+            "value": 30,
+            "unit": "day"
+          },
+          "require_declared_sha256": true,
+          "sources": [
+            {
+              "source_uri": "synthetic://hand-calculated-observations",
+              "source_owner": "demo-engineering",
+              "revision": "1",
+              "evidence_type": "synthetic-observations"
+            }
+          ]
+        },
+        "evidence_snapshot": {
+          "schema_version": "1.0",
+          "snapshot_id": "synthetic-observation-capture",
+          "revision": "1",
+          "input_fingerprint": "3e2c5aece85dc80be3a7dcdb1c467a75bf97e916c26868c74e5668860e99855d",
+          "files": [
+            {
+              "evidence_id": "E1",
+              "content_base64": "ewogICJjb250ZXh0IjogewogICAgImJhdGNoX3NpemUiOiAzLAogICAgImRlc2lnbl9yZXZpc2lvbiI6ICJBIiwKICAgICJmYWNpbGl0eV9pZCI6ICJzeW50aGV0aWMtc2hvcCIsCiAgICAiZmFjaWxpdHlfcmV2aXNpb24iOiAiMSIsCiAgICAiaG9yaXpvbiI6IHsKICAgICAgInVuaXQiOiAiaCIsCiAgICAgICJ2YWx1ZSI6IDUKICAgIH0sCiAgICAicHJvZHVjdF9pZCI6ICJkZW1vLWJyYWNrZXQiLAogICAgInNjZW5hcmlvX2ZpbmdlcnByaW50IjogIjUxMmZmMWNlMGFjMjU3NDllZDBmNzJhNWExMGYzOWQ2ZDFjZTUwMTAwYzg0NGVmOTc2ZDYzMzFmMDVmNmNmMjUiLAogICAgInNpbXVsYXRpb25fY29uZmlnX2ZpbmdlcnByaW50IjogImExYzBkYTM5NDAzMGJiZTUxZWYwZDQzYzZhMWI3NjE4MTlmNTE3ODU0OWE2Y2MzYTViOTU3OWNmMjI3NjZhMjgiCiAgfSwKICAibWV0cmljcyI6IHsKICAgICJiYXRjaF9jb21wbGV0aW9uX3RpbWUiOiB7CiAgICAgICJ1bml0IjogImgiLAogICAgICAidmFsdWUiOiA3CiAgICB9LAogICAgImV2ZW50dWFsX2dvb2RfdW5pdHMiOiB7CiAgICAgICJ1bml0IjogInBpZWNlIiwKICAgICAgInZhbHVlIjogMwogICAgfSwKICAgICJmdWxsX2JhdGNoX3RvdGFsX2Nvc3QiOiB7CiAgICAgICJ1bml0IjogIlVTRCIsCiAgICAgICJ2YWx1ZSI6IDIyMAogICAgfSwKICAgICJmdWxsX2JhdGNoX3VuaXRfY29zdCI6IHsKICAgICAgInVuaXQiOiAiVVNEL2dvb2RfcGllY2UiLAogICAgICAidmFsdWUiOiA3NQogICAgfSwKICAgICJnb29kX2J5X2hvcml6b24iOiB7CiAgICAgICJ1bml0IjogInBpZWNlIiwKICAgICAgInZhbHVlIjogMgogICAgfSwKICAgICJ3aXBfYXRfaG9yaXpvbiI6IHsKICAgICAgInVuaXQiOiAicGllY2UiLAogICAgICAidmFsdWUiOiAxCiAgICB9CiAgfSwKICAib2JzZXJ2YXRpb25fY291bnQiOiAxLAogICJyZWZlcmVuY2Vfa2luZCI6ICJzeW50aGV0aWMiLAogICJzY2hlbWFfdmVyc2lvbiI6ICIxLjAiCn0K"
+            }
+          ]
+        },
+        "replications": {
+          "runs": 4
+        },
+        "observation_checks": {
+          "evidence_id": "E1",
+          "tolerances": {
+            "good_by_horizon": {
+              "value": 1e-09,
+              "unit": "piece"
+            },
+            "wip_at_horizon": {
+              "value": 1e-09,
+              "unit": "piece"
+            },
+            "eventual_good_units": {
+              "value": 1e-09,
+              "unit": "piece"
+            },
+            "batch_completion_time": {
+              "value": 1e-09,
+              "unit": "h"
+            },
+            "full_batch_total_cost": {
+              "value": 1e-09,
+              "unit": "USD"
+            },
+            "full_batch_unit_cost": {
+              "value": 1e-09,
+              "unit": "USD/good_piece"
+            }
+          }
+        }
+      },
+      "expected_review_state": "REVISION_REQUIRED",
+      "expected_blocking_codes": [
+        "OBSERVATION_REFERENCE_FAILED"
+      ],
+      "expected_observation_status": "FAIL"
+    },
+    {
+      "case_id": "stale-evidence",
+      "study": {
+        "schema_version": "1.0",
+        "study_id": "synthetic-cnc-study",
+        "revision": "observations-1",
+        "manufacturing_input": {
+          "schema_version": "1.0",
+          "package_id": "synthetic-cnc",
+          "revision": "5",
+          "product_id": "demo-bracket",
+          "design_revision": "A",
+          "bom": [
+            {
+              "item_id": "blank",
+              "revision": "A",
+              "quantity": {
+                "value": 1,
+                "unit": "piece"
+              }
+            }
+          ],
+          "requirements": [
+            {
+              "requirement_id": "R1",
+              "description": "Synthetic bracket; drawing review required"
+            }
+          ],
+          "demand": {
+            "value": 2,
+            "unit": "piece"
+          },
+          "facility": {
+            "facility_id": "synthetic-shop",
+            "revision": "1"
+          },
+          "constraints": [
+            {
+              "constraint_id": "machine-envelope",
+              "kind": "hard",
+              "satisfied": null,
+              "issue": "Machine capability evidence is unavailable"
+            }
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "source_uri": "synthetic://hand-calculated-observations",
+              "source_owner": "demo-engineering",
+              "revision": "1",
+              "captured_at": "2026-10-15T00:00:00Z",
+              "evidence_type": "synthetic-observations",
+              "claim_ids": [
+                "R1"
+              ],
+              "content_hash": "4a3aa57257fe389e519b7ce50a6882047f530418e4724b4cc48fb22206612c2c"
+            }
+          ]
+        },
+        "scenario": {
+          "schema_version": "1.0",
+          "scenario_id": "synthetic-hand-reference",
+          "revision": "B",
+          "currency": "USD",
+          "target_good_units": 2,
+          "horizon": {
+            "value": 5,
+            "unit": "h"
+          },
+          "material_cost_per_start": {
+            "value": 5,
+            "unit": "USD/piece"
+          },
+          "source_reference": "synthetic://hand-calculated-serial-route-v1",
+          "assumptions": [
+            "Synthetic arithmetic reference only; no facility calibration."
+          ],
+          "operations": [
+            {
+              "operation_id": "cut",
+              "cycle_time": {
+                "value": 1,
+                "unit": "h"
+              },
+              "setup_time": {
+                "value": 0,
+                "unit": "h"
+              },
+              "machines": 1,
+              "availability": 1,
+              "yield_fraction": 1,
+              "machine_rate": {
+                "value": 20,
+                "unit": "USD/h"
+              },
+              "labor_rate": {
+                "value": 10,
+                "unit": "USD/h"
+              }
+            },
+            {
+              "operation_id": "finish",
+              "cycle_time": {
+                "value": 2,
+                "unit": "h"
+              },
+              "setup_time": {
+                "value": 0,
+                "unit": "h"
+              },
+              "machines": 1,
+              "availability": 1,
+              "yield_fraction": 1,
+              "machine_rate": {
+                "value": 15,
+                "unit": "USD/h"
+              },
+              "labor_rate": {
+                "value": 5,
+                "unit": "USD/h"
+              }
+            }
+          ]
+        },
+        "binding": {
+          "input_fingerprint": "7f6dba0aefb271c67fea20aa3efb7fe902d15d6e3f782725cc89c1b8debb5d56",
+          "scenario_fingerprint": "512ff1ce0ac25749ed0f72a5a10f39d6d1ce50100c844ef976d6331f05f6cf25"
+        },
+        "simulation": {
+          "seed": 42,
+          "batch_size": 3,
+          "include_costs": true
+        },
+        "uncertainty": {
+          "seed": 42,
+          "samples": 2,
+          "ranges": [
+            {
+              "operation_id": "finish",
+              "parameter": "yield_fraction",
+              "low": 0.5,
+              "high": 0.9
+            },
+            {
+              "operation_id": "finish",
+              "parameter": "availability",
+              "low": 0.8,
+              "high": 1
+            },
+            {
+              "operation_id": "cut",
+              "parameter": "cycle_time",
+              "low": 2.5,
+              "high": 3.5
+            }
+          ]
+        },
+        "reference_suite": null,
+        "evidence_policy": {
+          "schema_version": "1.0",
+          "policy_id": "synthetic-review-policy",
+          "revision": "1",
+          "as_of": "2026-11-01T00:00:00Z",
+          "max_age": {
+            "value": 1,
+            "unit": "day"
+          },
+          "require_declared_sha256": true,
+          "sources": [
+            {
+              "source_uri": "synthetic://hand-calculated-observations",
+              "source_owner": "demo-engineering",
+              "revision": "1",
+              "evidence_type": "synthetic-observations"
+            }
+          ]
+        },
+        "evidence_snapshot": {
+          "schema_version": "1.0",
+          "snapshot_id": "synthetic-observation-capture",
+          "revision": "1",
+          "input_fingerprint": "7f6dba0aefb271c67fea20aa3efb7fe902d15d6e3f782725cc89c1b8debb5d56",
+          "files": [
+            {
+              "evidence_id": "E1",
+              "content_base64": "ewogICJjb250ZXh0IjogewogICAgImJhdGNoX3NpemUiOiAzLAogICAgImRlc2lnbl9yZXZpc2lvbiI6ICJBIiwKICAgICJmYWNpbGl0eV9pZCI6ICJzeW50aGV0aWMtc2hvcCIsCiAgICAiZmFjaWxpdHlfcmV2aXNpb24iOiAiMSIsCiAgICAiaG9yaXpvbiI6IHsKICAgICAgInVuaXQiOiAiaCIsCiAgICAgICJ2YWx1ZSI6IDUKICAgIH0sCiAgICAicHJvZHVjdF9pZCI6ICJkZW1vLWJyYWNrZXQiLAogICAgInNjZW5hcmlvX2ZpbmdlcnByaW50IjogIjUxMmZmMWNlMGFjMjU3NDllZDBmNzJhNWExMGYzOWQ2ZDFjZTUwMTAwYzg0NGVmOTc2ZDYzMzFmMDVmNmNmMjUiLAogICAgInNpbXVsYXRpb25fY29uZmlnX2ZpbmdlcnByaW50IjogImExYzBkYTM5NDAzMGJiZTUxZWYwZDQzYzZhMWI3NjE4MTlmNTE3ODU0OWE2Y2MzYTViOTU3OWNmMjI3NjZhMjgiCiAgfSwKICAibWV0cmljcyI6IHsKICAgICJiYXRjaF9jb21wbGV0aW9uX3RpbWUiOiB7CiAgICAgICJ1bml0IjogImgiLAogICAgICAidmFsdWUiOiA3CiAgICB9LAogICAgImV2ZW50dWFsX2dvb2RfdW5pdHMiOiB7CiAgICAgICJ1bml0IjogInBpZWNlIiwKICAgICAgInZhbHVlIjogMwogICAgfSwKICAgICJmdWxsX2JhdGNoX3RvdGFsX2Nvc3QiOiB7CiAgICAgICJ1bml0IjogIlVTRCIsCiAgICAgICJ2YWx1ZSI6IDIyNQogICAgfSwKICAgICJmdWxsX2JhdGNoX3VuaXRfY29zdCI6IHsKICAgICAgInVuaXQiOiAiVVNEL2dvb2RfcGllY2UiLAogICAgICAidmFsdWUiOiA3NQogICAgfSwKICAgICJnb29kX2J5X2hvcml6b24iOiB7CiAgICAgICJ1bml0IjogInBpZWNlIiwKICAgICAgInZhbHVlIjogMgogICAgfSwKICAgICJ3aXBfYXRfaG9yaXpvbiI6IHsKICAgICAgInVuaXQiOiAicGllY2UiLAogICAgICAidmFsdWUiOiAxCiAgICB9CiAgfSwKICAib2JzZXJ2YXRpb25fY291bnQiOiAxLAogICJyZWZlcmVuY2Vfa2luZCI6ICJzeW50aGV0aWMiLAogICJzY2hlbWFfdmVyc2lvbiI6ICIxLjAiCn0K"
+            }
+          ]
+        },
+        "replications": {
+          "runs": 4
+        },
+        "observation_checks": {
+          "evidence_id": "E1",
+          "tolerances": {
+            "good_by_horizon": {
+              "value": 1e-09,
+              "unit": "piece"
+            },
+            "wip_at_horizon": {
+              "value": 1e-09,
+              "unit": "piece"
+            },
+            "eventual_good_units": {
+              "value": 1e-09,
+              "unit": "piece"
+            },
+            "batch_completion_time": {
+              "value": 1e-09,
+              "unit": "h"
+            },
+            "full_batch_total_cost": {
+              "value": 1e-09,
+              "unit": "USD"
+            },
+            "full_batch_unit_cost": {
+              "value": 1e-09,
+              "unit": "USD/good_piece"
+            }
+          }
+        }
+      },
+      "expected_review_state": "REVISION_REQUIRED",
+      "expected_blocking_codes": [
+        "EVIDENCE_COVERAGE_GAPS",
+        "EVIDENCE_SOURCE_GAPS",
+        "OBSERVATION_REFERENCE_FAILED"
+      ],
+      "expected_observation_status": "REFERENCE_UNAVAILABLE"
+    }
+  ]
+}
