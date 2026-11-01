@@ -100,9 +100,9 @@ Chromium. It loads the offline comparison at widths 375, 768 and 1440, checks
 case outcomes and viewport overflow, checks local links, and follows each case's
 review link in Chromium. External HTTP/HTTPS requests are blocked.
 
-The `synthetic-demo-browser-review` artifact includes thirteen screenshots (three
-combined-review widths, three failure-review widths, three planning-comparison
-widths and four full case reviews) plus the generated demo files.
+The `synthetic-demo-browser-review` artifact includes sixteen screenshots (three
+offline-suite widths, three combined-review widths, three failure-review widths,
+three planning-comparison widths and four full case reviews) plus the generated demo files.
 Automated browser checks do not replace human visual review of those screenshots.
 Failures retain available files for diagnosis.
 
@@ -111,7 +111,7 @@ To reproduce from the repository root:
 ```sh
 python -m pip install -r requirements-browser-tests.txt
 python -m playwright install chromium
-python -m examples.temporary_pilot --output runs/browser-pilot
+python -m examples.offline_suite --output runs/browser-offline-suite
 python tests/check_demo_browser.py
 ```
 

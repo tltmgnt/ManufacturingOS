@@ -37,8 +37,13 @@ misses and undefined values. Exit 0 is PASS, exit 1 is a completed mismatch with
 retained differences, and exit 2 is invalid input/execution failure. Partial
 outputs may remain on failure; no completed scorecard is promised then. Use a
 fresh output directory outside captured source roots. Existing outputs are
-preserved. CI uploads `offline-synthetic-edge-cases` for review.
+preserved. CI stores these results under `edges/` in `offline-synthetic-suite`.
 
 No production approval, enterprise integration, real-world accuracy or actual
 shadow-pilot acceptance follows from these toy cases. Full-batch costs exclude
 capex, added fixed costs, overhead, taxes and rework.
+
+
+Open the suite’s top-level `index.html` for all offline results. The component
+command remains available independently; earlier CI runs retain their original
+artifact names.

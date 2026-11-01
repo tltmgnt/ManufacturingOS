@@ -140,53 +140,25 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -r requirements-browser-tests.txt
       - run: python -m playwright install --with-deps chromium
-      - run: python -m examples.temporary_pilot --output runs/browser-pilot
+      - run: python -m examples.offline_suite --output runs/browser-offline-suite
       - run: python tests/check_demo_browser.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: synthetic-demo-browser-review
-          path: runs/browser-pilot/
+          path: runs/browser-offline-suite/
           if-no-files-found: warn
-  offline-repeatability:
+  offline-suite:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m examples.offline_repeatability --output runs/offline-repeatability
+      - run: python -m examples.offline_suite --output runs/offline-suite
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: offline-synthetic-repeatability
-          path: runs/offline-repeatability/
-          if-no-files-found: warn
-  offline-edge-cases:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: python -m examples.offline_edge_cases --output runs/offline-edge-cases
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: offline-synthetic-edge-cases
-          path: runs/offline-edge-cases/
-          if-no-files-found: warn
-  offline-invariant-sweep:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: python -m examples.offline_invariant_sweep --output runs/offline-invariant-sweep
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: offline-synthetic-invariant-sweep
-          path: runs/offline-invariant-sweep/
+          name: offline-synthetic-suite
+          path: runs/offline-suite/
           if-no-files-found: warn
