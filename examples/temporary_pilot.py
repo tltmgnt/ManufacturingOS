@@ -95,7 +95,7 @@ def run_pilot(output: Path) -> dict:
                        ["Four planning outcomes, including expected discrepancy and shortfall",
                         "Raw-to-derived synthetic CSV intake and verified bundle",
                         "Read-only loopback API transport with retained provenance",
-                        "Six source/access failures rejected before model execution",
+                        "Nine source/access/transport failures rejected before model execution",
                         "Separate fitting and held-out evaluation with frozen candidate",
                         "Baseline failure and candidate agreement retained without production authorization"]],
                    "planning": planning, "intake": intake, "api": api, "api_failures": api_failures, "calibration": calibration}

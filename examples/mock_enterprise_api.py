@@ -3,12 +3,14 @@ import argparse
 from contextlib import contextmanager
 import hashlib
 import hmac
-from http.client import HTTPConnection
+from http.client import HTTPConnection, RemoteDisconnected
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import math
 from pathlib import Path
 import re
 import secrets
+import socket
 import threading
 
 from .synthetic_export_intake import parse_export, run_intake_bytes
@@ -24,10 +26,11 @@ def validate_token(token):
         raise ValueError("Mock token must contain 32–128 URL-safe characters")
 
 
-def handler_for(raw: bytes, audit: list, read_token: str, denied_token: str | None = None, fault: str | None = None):
+def handler_for(raw: bytes, audit: list, read_token: str, denied_token: str | None = None, fault: str | None = None, stop_event=None):
     """Immutable fixture responses; write methods never touch a source."""
-    if fault not in (None, "throttled", "unavailable", "stale_revision", "hash_mismatch"):
+    if fault not in (None, "throttled", "unavailable", "stale_revision", "hash_mismatch", "timeout", "truncated", "connection_closed"):
         raise ValueError("Unknown synthetic server fault")
+    stop_event = stop_event or threading.Event()
     validate_token(read_token)
     if denied_token is not None:
         validate_token(denied_token)
@@ -44,7 +47,7 @@ def handler_for(raw: bytes, audit: list, read_token: str, denied_token: str | No
             audit.append({"method": self.command, "path": self.path, "status": status})
             self.send_response(status)
             self.send_header("Content-Type", content_type)
-            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Content-Length", str(len(body) + (10 if fault == "truncated" and status == 200 else 0)))
             self.send_header("Cache-Control", "no-store")
             if status == 401:
                 self.send_header("WWW-Authenticate", "Bearer")
@@ -80,6 +83,14 @@ def handler_for(raw: bytes, audit: list, read_token: str, denied_token: str | No
             if not self.authorize_read():
                 return
             if self.path == EXPORT_PATH:
+                if fault in ("timeout", "connection_closed"):
+                    audit.append({"method": self.command, "path": self.path, "status": None})
+                    if fault == "timeout":
+                        stop_event.wait(timeout=2)
+                    else:
+                        self.connection.shutdown(socket.SHUT_RDWR)
+                    self.close_connection = True
+                    return
                 if fault in ("throttled", "unavailable"):
                     self.respond(429 if fault == "throttled" else 503, b'{"error":"synthetic service fault"}\n')
                 else:
@@ -97,24 +108,28 @@ def handler_for(raw: bytes, audit: list, read_token: str, denied_token: str | No
 @contextmanager
 def mock_server(raw: bytes, *, read_token: str, denied_token: str | None = None, fault: str | None = None):
     audit = []
-    server = ThreadingHTTPServer(("127.0.0.1", 0), handler_for(raw, audit, read_token, denied_token, fault))
+    stop_event = threading.Event()
+    server = ThreadingHTTPServer(("127.0.0.1", 0), handler_for(raw, audit, read_token, denied_token, fault, stop_event))
     server.daemon_threads = True
     thread = threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.05}, daemon=True)
     thread.start()
     try:
         yield server.server_address[1], audit
     finally:
+        stop_event.set()
         server.shutdown()
         server.server_close()
         thread.join(timeout=3)
 
 
-def fetch_export(port: int, token: str) -> tuple[bytes, dict]:
+def fetch_export(port: int, token: str, *, timeout: float = 3) -> tuple[bytes, dict]:
     # Host/path are fixed; only an ephemeral mock token is accepted, never a real credential.
     if type(port) is not int or not 1 <= port <= 65535:
         raise ValueError("Mock API port must be an integer from 1 to 65535")
     validate_token(token)
-    connection = HTTPConnection("127.0.0.1", port, timeout=3)
+    if type(timeout) not in (int, float) or not math.isfinite(timeout) or not 0 < timeout <= 3:
+        raise ValueError("Mock socket timeout must be finite, positive and at most three seconds")
+    connection = HTTPConnection("127.0.0.1", port, timeout=timeout)
     try:
         connection.request("GET", EXPORT_PATH, headers={"Accept": "text/csv", "Authorization": "Bearer " + token})
         response = connection.getresponse()
@@ -159,18 +174,22 @@ def run_api_rehearsal(output: Path, *, failure: str | None = None) -> dict:
     # Reject previous runs before starting a server or making a request.
     if output.exists() or output.is_symlink():
         raise FileExistsError("Output path already exists")
-    if failure not in (None, "invalid_credential", "insufficient_scope", "throttled", "unavailable", "stale_revision", "hash_mismatch"):
+    if failure not in (None, "invalid_credential", "insufficient_scope", "throttled", "unavailable", "stale_revision", "hash_mismatch", "timeout", "truncated", "connection_closed"):
         raise ValueError("Unknown synthetic API failure")
     raw_fixture = (Path(__file__).resolve().parent / "synthetic-batch-export.csv").read_bytes()
     read_token = secrets.token_urlsafe(32)
     denied_token = ("y" if read_token[0] == "x" else "x") + read_token[1:]
     supplied_token = denied_token if failure in ("invalid_credential", "insufficient_scope") else read_token
-    server_fault = failure if failure in ("throttled", "unavailable", "stale_revision", "hash_mismatch") else None
+    server_fault = failure if failure in ("throttled", "unavailable", "stale_revision", "hash_mismatch", "timeout", "truncated", "connection_closed") else None
     with mock_server(raw_fixture, read_token=read_token,
                      denied_token=denied_token if failure == "insufficient_scope" else None,
                      fault=server_fault) as (port, audit):
         try:
-            received, transport = fetch_export(port, supplied_token)
+            received, transport = fetch_export(port, supplied_token, timeout=0.2 if failure == "timeout" else 3)
+        except TimeoutError as exc:
+            raise MockAPIRejected("Mock export timed out; no retry performed", audit) from exc
+        except RemoteDisconnected as exc:
+            raise MockAPIRejected("Mock connection closed before response; no retry performed", audit) from exc
         except ValueError as exc:
             raise MockAPIRejected(str(exc), audit) from exc
     result = run_intake_bytes(received, output)

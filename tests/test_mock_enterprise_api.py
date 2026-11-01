@@ -179,3 +179,20 @@ class MockEnterpriseAPITests(unittest.TestCase):
                         with ZipFile(path) as archive:
                             for name in archive.namelist():
                                 self.assertNotIn(TOKEN.encode(), archive.read(name), name)
+
+
+    def test_invalid_timeouts_are_rejected_before_transport(self):
+        with patch("examples.mock_enterprise_api.HTTPConnection") as connection:
+            for timeout in (0, -1, 3.1, float("nan"), float("inf"), True, "1"):
+                with self.subTest(timeout=timeout), self.assertRaises(ValueError):
+                    fetch_export(12345, TOKEN, timeout=timeout)
+            connection.assert_not_called()
+
+    def test_partial_response_is_not_parsed_as_a_source_export(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "truncated"
+            with patch("examples.mock_enterprise_api.parse_export") as parser:
+                with self.assertRaisesRegex(ValueError, "byte count"):
+                    run_api_rehearsal(output, failure="truncated")
+                parser.assert_not_called()
+            self.assertFalse(output.exists())
