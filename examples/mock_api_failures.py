@@ -9,7 +9,8 @@ from .temporary_use_case import encode
 
 CASES = {"invalid_credential": (401, "HTTP 401"), "insufficient_scope": (403, "HTTP 403"),
          "throttled": (429, "HTTP 429"), "unavailable": (503, "HTTP 503"),
-         "stale_revision": (200, "source revision"), "hash_mismatch": (200, "ETag")}
+         "stale_revision": (200, "source revision"), "hash_mismatch": (200, "ETag"), "timeout": (None, "timed out"),
+         "truncated": (200, "byte count"), "connection_closed": (None, "closed before response")}
 
 
 def run_failures(output: Path) -> dict:

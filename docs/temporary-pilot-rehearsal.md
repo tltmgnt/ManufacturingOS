@@ -25,7 +25,7 @@ remain repository modules rather than installed runtime CLI commands.
 | `planning/` | Four cases: agreement, discrepancy, shortfall and assumed remedy |
 | `intake/` | Synthetic raw CSV, derived reference, provenance and verified bundle |
 | `api/` | Local read-only mock API, transport provenance, request audit and study review |
-| `api-failures/` | Six rejected source/access faults, request audits and failure review |
+| `api-failures/` | Nine rejected source/access/transport faults, request audits and failure review |
 | `calibration/` | Fitting records, held-out export, frozen candidate, baseline/candidate residuals and reviews |
 
 A successful command exits 0 and reports SOFTWARE_REHEARSAL_PASSED. This requires

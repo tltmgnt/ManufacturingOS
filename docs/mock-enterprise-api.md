@@ -65,10 +65,10 @@ remain false throughout this rehearsal.
 python -m examples.mock_api_failures --output runs/api-failures
 ```
 
-The combined pilot command also runs six deliberately failing mock cases: invalid
+The combined pilot command also runs nine deliberately failing mock cases: invalid
 credentials (401), insufficient read scope (403), throttling (429), service
-unavailable (503), stale source revision (HTTP 200 but rejected metadata), and
-hash mismatch (HTTP 200 but rejected content consistency). The server can inject
+unavailable (503), stale source revision (HTTP 200 but rejected metadata), hash mismatch (HTTP 200 but rejected content consistency), a response timeout,
+a truncated body, and a connection closed before any response. The server can inject
 these fixed local fixture faults; no arbitrary upstream host is introduced.
 
 Open `api-failures/index.html` in the combined output. Each case must make exactly
@@ -78,6 +78,11 @@ PASS means the expected failure was detected. Partial results are not substitute
 with model estimates, and there is no automatic retry, including for Retry-After.
 
 The invalid-credential case represents a rejected token; real identity-provider
-expiry, renewal and revocation are not implemented. Real service recovery, timeout
-and network-partition behavior still require integration-specific testing. Source
+expiry, renewal and revocation are not implemented. The timeout fixture uses a 0.2-second socket limit while the server waits up to
+two seconds; shutdown releases the wait immediately. The normal socket limit stays
+at three seconds. Missing HTTP status values in timeout/closed-connection audit
+rows mean no response was sent, not a successful request.
+
+Real service recovery and network-partition behavior still require
+integration-specific testing; these local faults are bounded transport surrogates. Source
 rejection does not claim an enterprise security or availability certification.

@@ -17,12 +17,12 @@ class MockAPIFailureTests(unittest.TestCase):
                 summary = run_failures(output)
                 intake.assert_not_called()
             self.assertEqual(summary["status"], "EXPECTED_FAILURES_DETECTED")
-            self.assertEqual(len(summary["cases"]), 6)
+            self.assertEqual(len(summary["cases"]), 9)
             for row in summary["cases"]:
                 self.assertFalse(row["model_executed"])
                 self.assertFalse((output / row["case"]).exists())
                 self.assertEqual(len(row["request_audit"]), 1)
-            self.assertEqual([row["request_audit"][0]["status"] for row in summary["cases"]], [401, 403, 429, 503, 200, 200])
+            self.assertEqual([row["request_audit"][0]["status"] for row in summary["cases"]], [401, 403, 429, 503, 200, 200, None, 200, None])
             self.assertFalse(summary["automatic_retries"])
             self.assertTrue((output / "index.html").is_file())
 

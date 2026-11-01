@@ -36,7 +36,7 @@ def main():
             page.set_viewport_size({"width": width, "height": 900})
             page.goto((pilot / "api-failures/index.html").as_uri(), wait_until="load")
             assert page.title() == "Mock API failure rehearsal"
-            assert page.locator("tbody tr").count() == 6
+            assert page.locator("tbody tr").count() == 9
             assert "Rejected before study" in page.locator("body").inner_text()
             assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
             page.screenshot(path=str(screenshots / f"api-failures-{width}.png"), full_page=True)
