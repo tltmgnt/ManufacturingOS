@@ -254,3 +254,20 @@ Dispositions are `COMMENT`, `REQUEST_REVISION`, and `READY_FOR_FORMAL_REVIEW`. N
 Assessments distinguish `NOTES_RECORDED` and `REQUESTED_CHANGES`, list request IDs and roles with/without notes, and retain pending approvals and `production_authorized: false`. HTML exports show the feedback after study findings. Bundles optionally carry `review-notes.json` and `review-notes-assessment.json`, reconstruct their contents, and report `notes_state` separately from the original study `review_state`. Neither the plan nor study output is modified by annotations. Existing note-free bundles retain their prior contents.
 
 The notes command exits `0` for comments/readiness only, `1` if any revision request is recorded, and `2` for invalid/stale notes or I/O errors. Exit-1 logs are still saved for review. HTML/bundle generation can succeed for a report with requested changes; inspect `notes_state`. CI and the installed-wheel smoke test exercise annotations, export, and bundle verification.
+
+## Scheduled machine downtime
+
+```sh
+manufacturing-os simulate examples/finite-batch-downtime.json --output downtime-simulation.json
+manufacturing-os bundle create examples/downtime-study.json --output downtime-study.zip
+```
+
+Finite-batch inputs optionally accept `downtime`, a list of machine calendars. Each row identifies an `operation_id`, zero-based integer `machine_id`, and nonempty `windows` list. Each window has explicit duration-style `start`/`end` quantities in `s`, `min`, or `h`, measured from simulation time zero. Starts are nonnegative, ends must be later, and windows for one machine may touch but not overlap. Duplicate machine calendars and unknown operations/machines are rejected. Window order is normalized for reporting.
+
+Downtime intervals are half-open: work may finish exactly when downtime begins and start exactly when it ends. Setup and each processing cycle are nonpreemptive and must fit entirely outside downtime. Setup takes the first suitable slot from zero; processing takes the earliest feasible slot on any parallel machine, with machine ID breaking ties. Downtime never counts as occupied setup/processing time. Queues, WIP, good output, and batch completion reflect the scheduled windows, including windows extending beyond the reporting horizon.
+
+Calendar operations must have `availability=1` to prevent double-counting downtime through both a calendar and an effective-rate factor. Operations without calendars retain their existing availability behavior. There are at most 1,000 machine calendars and 1,000 total windows. Calendar runs additionally require `batch_size * (total machines + total windows) <= 1,000,000`, bounding candidate-slot search work.
+
+Integrated studies accept the same calendar under `simulation.downtime`; HTML shows normalized intervals and comparisons flag the changed simulation configuration. Scheduled windows affect only the finite-batch model: the steady-state economic/capacity and uncertainty models exclude them, with an explicit `DOWNTIME_SCOPE` review finding. The example's maintenance window causes a simulated target miss and a revision-required study; packaging/verification still succeeds while retaining that state.
+
+Reports retain normalized calendars and per-machine setup intervals for inspection. No-calendar inputs preserve their previous output. This remains an unvalidated simulator: calendars are supplied assumptions, not live equipment schedules, and no recurring shifts, random failures, shared resources, or equipment commands are implemented.

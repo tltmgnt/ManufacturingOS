@@ -41,7 +41,8 @@ def run_study(spec: dict) -> dict:
     # conversion from Phase 1's generic demand units.
     if package.demand.unit != "piece" or package.demand.value != scenario.target_good_units:
         raise ValueError("study requires demand in piece equal to scenario target_good_units")
-    fields(spec["simulation"], {"seed", "batch_size"}, "simulation configuration")
+    simulation_optional = {"downtime"} if isinstance(spec["simulation"],dict) and "downtime" in spec["simulation"] else set()
+    fields(spec["simulation"], {"seed", "batch_size"} | simulation_optional, "simulation configuration")
     fields(spec["uncertainty"], {"seed", "samples", "ranges"}, "uncertainty configuration")
     # Every component receives a copy of the one authoritative scenario.
     simulation_input = {"schema_version": "1.0", "simulation_id": spec["study_id"]+"/batch",
@@ -65,6 +66,9 @@ def run_study(spec: dict) -> dict:
                  "message": "Calculations, simulation, and assumed input distributions require qualified review and facility calibration."},
                 {"code": "MOCK_SPECIALISTS", "severity": "REVIEW", "component": "plan",
                  "message": "A1-A9 outputs remain mocks; the study adds advisory analyses without replacing specialist conclusions."}]
+    if spec["simulation"].get("downtime"):
+        findings.append({"code": "DOWNTIME_SCOPE", "severity": "REVIEW", "component": "simulation",
+                         "message": "Scheduled downtime affects only finite-batch simulation; steady-state cost/capacity and uncertainty estimates exclude these windows."})
     if plan.verification.status == "FAIL":
         findings.append({"code": "PLAN_VERIFICATION_FAILED", "severity": "BLOCKING", "component": "plan",
                          "message": "Original plan verification failed; inspect plan verification findings and conflict records."})

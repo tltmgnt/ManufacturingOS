@@ -6,14 +6,72 @@ import math
 from pathlib import Path
 import random
 
-from .calculations import Scenario, fields, nonempty, quantity
+from .calculations import Scenario, fields, hours, nonempty, quantity
 from .models import digest
 
 SIMULATOR_VERSION = "serial-events-1.0"
 
 
+def available_slot(start: float, duration: float, windows: list[tuple[float, float]]) -> float:
+    """Find a nonpreemptive slot outside sorted half-open downtime windows."""
+    if duration == 0:
+        return start
+    for begin, end in windows:
+        if start+duration <= begin:
+            break
+        if start < end:
+            start = end
+    return start
+
+
+def parse_downtime(data: object, scenario: Scenario, size: int) -> tuple[dict, list]:
+    if not isinstance(data, list) or len(data) > 1000:
+        raise ValueError("downtime must be a list of at most 1000 machine calendars")
+    operations = {op.operation_id: op for op in scenario.operations}
+    calendars, normalized = {}, []
+    window_count = 0
+    for row in data:
+        fields(row, {"operation_id", "machine_id", "windows"}, "machine downtime")
+        nonempty(row["operation_id"], "operation_id")
+        if row["operation_id"] not in operations:
+            raise ValueError("unknown downtime operation")
+        op = operations[row["operation_id"]]
+        machine = row["machine_id"]
+        if type(machine) is not int or not 0 <= machine < op.machines:
+            raise ValueError("downtime machine_id outside operation machine range")
+        if op.availability != 1:
+            raise ValueError("calendar operations require availability=1 to avoid double-counting downtime")
+        key = op.operation_id, machine
+        if key in calendars:
+            raise ValueError("duplicate machine downtime calendar")
+        if not isinstance(row["windows"], list) or not 1 <= len(row["windows"]) <= 1000:
+            raise ValueError("machine downtime requires 1 to 1000 windows")
+        windows = []
+        for window in row["windows"]:
+            fields(window, {"start", "end"}, "downtime window")
+            begin, end = hours(window["start"]), hours(window["end"])
+            if end <= begin:
+                raise ValueError("downtime end must be after start")
+            windows.append((begin, end))
+        windows.sort()
+        if any(windows[i][0] < windows[i-1][1] for i in range(1,len(windows))):
+            raise ValueError("overlapping machine downtime windows")
+        window_count += len(windows)
+        if window_count > 1000:
+            raise ValueError("downtime exceeds 1000 windows")
+        calendars[key] = windows
+    if calendars and size*(sum(op.machines for op in scenario.operations)+window_count) > 1000000:
+        raise ValueError("calendar scheduling exceeds 1000000 candidate/window work units")
+    for (operation_id,machine), windows in sorted(calendars.items()):
+        for begin,end in windows:
+            normalized.append({"operation_id":operation_id,"machine_id":machine,
+                               "start":quantity(begin,"h"),"end":quantity(end,"h")})
+    return calendars, normalized
+
+
 def simulate_batch(spec: dict) -> dict:
-    fields(spec, {"schema_version", "simulation_id", "revision", "seed", "batch_size", "scenario"}, "batch simulation")
+    optional = {"downtime"} if isinstance(spec, dict) and "downtime" in spec else set()
+    fields(spec, {"schema_version", "simulation_id", "revision", "seed", "batch_size", "scenario"} | optional, "batch simulation")
     if spec["schema_version"] != "1.0":
         raise ValueError("unsupported simulation schema")
     for name in ("simulation_id", "revision"):
@@ -26,6 +84,7 @@ def simulate_batch(spec: dict) -> dict:
     scenario = Scenario.from_dict(spec["scenario"])
     if size * len(scenario.operations) > 100000 or sum(op.machines for op in scenario.operations) > 10000:
         raise ValueError("simulation exceeds 100000 job-operations or 10000 machines")
+    calendars, normalized_downtime = parse_downtime(spec.get("downtime", []), scenario, size)
     rng = random.Random(spec["seed"])
     horizon = scenario.horizon_hours
     arrivals = [(0.0, job) for job in range(size)]
@@ -33,20 +92,29 @@ def simulate_batch(spec: dict) -> dict:
     scrap_times: dict[int, float] = {}
     operations = []
     for op in scenario.operations:
-        # Setup begins at time zero on every machine; availability stretches time,
-        # rather than simulating a downtime calendar or random breakdowns.
+        # Calendar setup starts at the first nonpreemptive slot from time zero.
         setup_end = op.setup_hours / op.availability
         service = op.cycle_hours / op.availability
         if not math.isfinite(setup_end) or not math.isfinite(service) or service <= 0:
             raise ValueError("unsupported time scale")
-        machines = [(setup_end, machine) for machine in range(op.machines)]
+        setup_starts = [available_slot(0.0, setup_end, calendars.get((op.operation_id,machine), [])) for machine in range(op.machines)]
+        ready_times = [start+setup_end for start in setup_starts]
+        if any(not math.isfinite(time) for time in ready_times):
+            raise ValueError("unsupported setup time scale")
+        machines = [(ready_times[machine], machine) for machine in range(op.machines)]
         heapq.heapify(machines)
-        busy = [min(horizon, setup_end)] * op.machines
+        busy = [max(0.0,min(horizon,finish)-min(horizon,start)) for start,finish in zip(setup_starts,ready_times)]
+        calendar_operation = any(key[0]==op.operation_id for key in calendars)
         next_arrivals = []
         records = []
         for arrival, job in sorted(arrivals):
-            ready, machine = heapq.heappop(machines)
-            start = max(arrival, ready)
+            if calendar_operation:
+                start, machine = min((available_slot(max(arrival,ready_times[index]), service,
+                                                    calendars.get((op.operation_id,index),[])),index)
+                                     for index in range(op.machines))
+            else:
+                ready, machine = heapq.heappop(machines)
+                start = max(arrival, ready)
             finish = start + service
             if not math.isfinite(finish) or finish <= start:
                 raise ValueError("unsupported event time scale")
@@ -58,7 +126,9 @@ def simulate_batch(spec: dict) -> dict:
             timelines[job].append(record)
             records.append(record)
             busy[machine] += max(0.0, min(finish, horizon) - min(start, horizon))
-            heapq.heappush(machines, (finish, machine))
+            ready_times[machine] = finish
+            if not calendar_operation:
+                heapq.heappush(machines, (finish, machine))
             if passed:
                 next_arrivals.append((finish, job))
             else:
@@ -83,6 +153,9 @@ def simulate_batch(spec: dict) -> dict:
                            "mean_full_batch_queue_wait": quantity(math.fsum(row["queue_wait_hours"]/len(records) for row in records) if records else 0.0, "h"),
                            "occupied_fraction_by_machine": [quantity(time/horizon, "fraction") for time in busy],
                            "timeline": records})
+        if optional:
+            operations[-1]["setup_intervals"] = [{"machine_id": index, "start_hours": start, "finish_hours": start+setup_end}
+                                                   for index,start in enumerate(setup_starts)]
         arrivals = next_arrivals
     final_times = {job: finish for finish, job in arrivals}
     good = sum(finish <= horizon for finish in final_times.values())
@@ -99,7 +172,7 @@ def simulate_batch(spec: dict) -> dict:
                      "eventual_good_completion": quantity(final_times[job], "h") if job in final_times else None,
                      "eventual_scrap_time": quantity(scrap_times[job], "h") if job in scrap_times else None})
     completion = max((row["finish_hours"] for timeline in timelines for row in timeline), default=0.0)
-    return {"schema_version": "1.0", "simulator_version": SIMULATOR_VERSION,
+    result = {"schema_version": "1.0", "simulator_version": SIMULATOR_VERSION,
             "simulation_id": spec["simulation_id"], "simulation_revision": spec["revision"],
             "input_fingerprint": digest(spec), "input": deepcopy(spec),
             "horizon": quantity(horizon, "h"), "batch_size": size,
@@ -111,13 +184,16 @@ def simulate_batch(spec: dict) -> dict:
             "assumptions": list(scenario.assumptions) + [
                 "Finite batch released together at time zero; FIFO serial route with unlimited intermediate buffers.",
                 "Parallel machines are identical, dedicated, nonpreemptive; machine ID breaks scheduling ties.",
-                "One setup per machine begins at time zero, even if a downstream machine has no arrivals.",
-                "Availability stretches setup and cycle durations by 1/availability; no downtime calendars.",
+                "One setup per machine uses the first available nonpreemptive slot from time zero." if calendars else "One setup per machine begins at time zero, even if a downstream machine has no arrivals.",
+                "Calendar operations require availability=1; half-open downtime windows exclude setup and processing." if calendars else "Availability stretches setup and cycle durations by 1/availability; no downtime calendars.",
                 "Independent Bernoulli quality checks occur at each operation completion; failed jobs leave the route.",
-                "No transfer, rework, shared labor/equipment, shifts, maintenance, or cost simulation.",
+                "No transfer, rework, shared labor/equipment, recurring shifts, random breakdowns, or cost simulation." if calendars else "No transfer, rework, shared labor/equipment, shifts, maintenance, or cost simulation.",
                 "Events exactly at the horizon count as completed/started; occupancy includes setup and processing.",
                 "Full-batch timelines include future events beyond the reporting horizon."],
             "validation_status": "UNVALIDATED_SIMULATION", "production_authorized": False}
+    if optional:
+        result["normalized_downtime"] = normalized_downtime
+    return result
 
 
 def main(argv: list[str] | None = None) -> int:

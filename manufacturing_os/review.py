@@ -64,6 +64,10 @@ def render_review(report: dict, notes: dict | None = None) -> str:
         ["Target met in this seeded run",text(batch["target_met"])],
         ["Eventual batch completion (may exceed horizon)",measurement(batch["batch_completion_time"])],
     ])
+    calendar_html = ""
+    if "normalized_downtime" in batch:
+        calendar_html = "<p>Scheduled windows affect this finite-batch simulation; steady-state cost/capacity and uncertainty estimates exclude these windows.</p>"+table("Scheduled downtime (half-open intervals)", ["Operation", "Machine", "Start", "End"], [
+            [text(row["operation_id"]), text(row["machine_id"]), measurement(row["start"]), measurement(row["end"])] for row in batch["normalized_downtime"]])
     queues = table("Finite-batch queue summary", ["Operation", "Queued at horizon", "Processing at horizon", "Peak queue", "Full-batch mean wait"], [
         [text(row["operation_id"]),text(row["queued_at_horizon"]),text(row["processing_at_horizon"]),
          text(row["peak_queued_by_horizon"]),measurement(row["mean_full_batch_queue_wait"])] for row in batch["operations"]])
@@ -138,7 +142,7 @@ def render_review(report: dict, notes: dict | None = None) -> str:
 <nav aria-label='Report sections'><a href='#findings'>Findings</a><a href='#estimates'>Estimates</a><a href='#batch'>Finite batch</a><a href='#uncertainty'>Uncertainty</a><a href='#references'>References</a><a href='#plan'>Plan</a><a href='#provenance'>Provenance</a></nav>
 <main><section id=findings><h2>Review findings</h2><ul class=findings>{findings_html}</ul>{summary}</section>{notes_html}
 <section id=estimates><h2>Capacity and cost estimates</h2><p>Expected-value steady-state model; fractional starts are intentional. Costs are estimates in the declared currency.</p>{estimates}{capacity}</section>
-<section id=batch><h2>Finite-batch simulation</h2><p>Seed {text(report['input']['simulation']['seed'])}. This is one seeded outcome. Queue waits and eventual completion include events beyond the horizon.</p>{batch_summary}{queues}</section>
+<section id=batch><h2>Finite-batch simulation</h2><p>Seed {text(report['input']['simulation']['seed'])}. This is one seeded outcome. Queue waits and eventual completion include events beyond the horizon.</p>{batch_summary}{calendar_html}{queues}</section>
 <section id=uncertainty><h2>Uncertainty exploration</h2><p>{text(uncertainty['sample_count'])} samples; seed {text(report['input']['uncertainty']['seed'])}. {text(uncertainty['feasible_samples'])} sampled scenarios fit steady-state capacity. This fraction is not a calibrated manufacturing risk probability. Percentiles describe sampled model outputs, not confidence intervals.</p>{ranges}{sampled}</section>
 <section id=references><h2>Synthetic reference checks</h2>{reference_html}</section>
 <section id=plan><h2>Original plan verification: {text(plan['verification']['status'])}</h2>{plan_findings}<h3>Conflicts</h3>{conflicts}{specialist}<h3>Required approval roles</h3>{approvals}</section>

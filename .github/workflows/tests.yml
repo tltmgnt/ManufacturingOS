@@ -65,3 +65,11 @@ jobs:
           name: synthetic-annotated-review-python-${{ matrix.python-version }}
           path: ci-annotated-bundle.zip
           if-no-files-found: error
+      - run: python -m manufacturing_os.cli simulate examples/finite-batch-downtime.json
+      - run: python -m manufacturing_os.cli bundle create examples/downtime-study.json --output ci-downtime-bundle.zip
+      - run: python -m manufacturing_os.cli bundle verify ci-downtime-bundle.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-downtime-review-python-${{ matrix.python-version }}
+          path: ci-downtime-bundle.zip
+          if-no-files-found: error

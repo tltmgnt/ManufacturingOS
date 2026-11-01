@@ -50,6 +50,9 @@ def main():
             captured=working/'captured.json'
             run([executable,'capture',ROOT/'examples/source-input.json',ROOT/'examples/capture-manifest.json','--root',ROOT/'examples/source-files','--output',captured])
             assert json.loads(captured.read_text())==json.loads((ROOT/'examples/source-snapshot.json').read_text())
+        downtime=json.loads(run([executable,'simulate',ROOT/'examples/finite-batch-downtime.json']))
+        assert len(downtime['normalized_downtime'])==1
+        assert downtime['target_met'] is False
         before=working/'before.json'
         after=working/'after.json'
         review=working/'review.html'
