@@ -13,8 +13,8 @@ from .temporary_use_case import encode
 
 
 def render_suite(result):
-    rows = "".join('<tr><th scope="row">' + escape(row["component"]) + '</th><td>' +
-                   escape(row["software_check"]) + '</td><td>' + escape(row["observed_status"]) + '</td></tr>'
+    rows = "".join('<tr><th scope="row">' + escape(row["component"]) + '</th><td data-label="Check"><span>' +
+                   escape(row["software_check"]) + '</span></td><td data-label="Observed result"><span>' + escape(row["observed_status"]) + '</span></td></tr>'
                    for row in result["components"])
     overall = '<p><strong>Overall software result: <span id="overall-result">' + escape(result["status"]) + '</span></strong></p>'
     overall += '<p>Captured sources: ' + ('consistent' if result["source_consistent"] else 'DIFFERENT — inspect the scorecard') + '</p>'
@@ -23,7 +23,12 @@ def render_suite(result):
 <style>body{font:16px/1.6 system-ui,sans-serif;max-width:900px;margin:2rem auto;padding:0 1rem;color:#16263a;background:#f6f8fb}
 h1{line-height:1.2}.notice{background:#fff0c2;border-left:5px solid #946200;padding:1rem}
 table{border-collapse:collapse;table-layout:fixed;width:100%;background:white}th,td{padding:.7rem;text-align:left;border-bottom:1px solid #ccd4df;overflow-wrap:anywhere}
-a{color:#124e96}a:focus{outline:3px solid #946200}li{margin:.6rem 0}</style></head><body>
+a{color:#124e96}a:focus{outline:3px solid #946200}li{margin:.6rem 0}
+@media(max-width:600px){table,tbody,tr{display:block}thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+tbody tr{margin:1rem 0;border:1px solid #ccd4df;border-radius:.4rem;overflow:hidden}
+tbody th{display:block;background:#e6edf5}tbody td{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:.8rem}
+tbody td::before{content:attr(data-label);font-weight:600}td span{min-width:0;overflow-wrap:anywhere}td:last-child{border-bottom:0}}
+</style></head><body>
 <h1>Offline synthetic suite</h1><p class="notice"><strong>No real-system reads.</strong>
 Only bundled synthetic fixtures and a loopback mock API are used. Real calibration,
 enterprise acceptance and an actual shadow pilot remain open. Production authorization is false.</p>
