@@ -148,3 +148,17 @@ jobs:
           name: synthetic-demo-browser-review
           path: runs/browser-pilot/
           if-no-files-found: warn
+  offline-repeatability:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m examples.offline_repeatability --output runs/offline-repeatability
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: offline-synthetic-repeatability
+          path: runs/offline-repeatability/
+          if-no-files-found: warn
