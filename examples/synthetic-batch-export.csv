@@ -1,0 +1,2 @@
+data_kind,batch_id,product_id,design_revision,facility_id,facility_revision,batch_size,horizon_h,good_by_horizon,scrapped_by_horizon,wip_at_horizon,eventual_good_units,eventual_scrapped_units,batch_completion_time_h,full_batch_total_cost_usd
+synthetic,demo-batch-001,demo-bracket,A,synthetic-shop,1,3,5,2,0,1,3,0,7,225

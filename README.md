@@ -17,6 +17,13 @@ python -m examples.temporary_use_case --output runs/temporary-bracket-demo
 This keeps workflow development moving while facility data is unavailable.
 Empirical calibration remains open.
 
+A [read-only synthetic CSV intake rehearsal](docs/synthetic-export-intake.md)
+also exercises source validation, raw-to-derived provenance and model comparison:
+
+```sh
+python -m examples.synthetic_export_intake --output runs/export-intake
+```
+
 ## Start the calibration milestone
 
 Use the [first-facility calibration protocol](docs/calibration-protocol.md) and

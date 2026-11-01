@@ -21,6 +21,13 @@ jobs:
           name: synthetic-bracket-demo-python-${{ matrix.python-version }}
           path: runs/temporary-bracket-demo/
           if-no-files-found: error
+      - name: Rehearse read-only synthetic batch export intake
+        run: python -m examples.synthetic_export_intake --output runs/synthetic-export-intake
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-export-intake-python-${{ matrix.python-version }}
+          path: runs/synthetic-export-intake/
+          if-no-files-found: error
       - run: python -m manufacturing_os examples/synthetic-cnc.json
       - run: python -m manufacturing_os.calculations examples/serial-route.json --variants examples/serial-route-variants.json
       - run: python -m manufacturing_os.experiments validate examples/arithmetic-references.json
