@@ -56,3 +56,16 @@ and review-flow feedback. Real source access controls, connector behavior and
 facility performance cannot be validated with this case. When approved data is
 available, follow the [calibration protocol](calibration-protocol.md); retain this
 synthetic case as a regression example rather than relabeling it as measured data.
+
+## Continuous integration
+
+The Python 3.11–3.13 CI matrix executes both cases. A successful job means the
+baseline agrees and the deliberately wrong reference is detected; it does not
+mean both observation reports pass. Any unexpected observation status, loss of
+the +5 USD residual, loss of the disagreement review requirement, production
+authorization, or invalid bundle causes the runner to fail.
+
+Each matrix job uploads `synthetic-bracket-demo-python-VERSION` with the summary,
+case inputs, reports, HTML reviews, ZIP bundles and verification records. Download
+it from the GitHub Actions run and open the case HTML files locally. Artifacts
+contain synthetic data only and follow the repository's default retention period.
