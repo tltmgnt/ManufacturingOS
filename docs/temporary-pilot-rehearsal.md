@@ -103,3 +103,10 @@ can prevent reconstruction; use the recorded matching checkout and dependencies.
 CI verifies the complete matrix artifact before upload. The browser job refreshes
 its own manifest after adding screenshots, then verifies its diagnostic artifact.
 This internal refresh does not grant authenticity or authorization.
+
+Verification also cross-checks the combined/component scorecards against the
+verified study reports, source snapshots, transport bytes/audits and failure
+expectations. Refreshing a manifest cannot make a conflicting target flag,
+residual, request method or model-execution claim internally consistent. This
+remains a supplied-content consistency check, not an authenticated assertion
+that an external event happened.
