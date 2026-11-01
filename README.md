@@ -1,6 +1,6 @@
 # ManufacturingOS
 
-**v0.1.0 is an alpha advisory prototype.** It includes deterministic mock-agent orchestration and initial manufacturing calculation/simulation tools. The reference specifications describe MADMS; real facility calibration, enterprise integration, and shadow-pilot acceptance remain outstanding.
+**v0.2.0 is an alpha advisory prototype with a complete synthetic rehearsal.** It includes deterministic mock-agent orchestration and initial manufacturing calculation/simulation tools. The reference specifications describe MADMS; real facility calibration, enterprise integration, and shadow-pilot acceptance remain outstanding.
 
 See [release notes](CHANGELOG.md) for the delivered scope and known limits, and [the roadmap](roadmap.md) for the remaining milestones.
 
@@ -84,7 +84,7 @@ CI builds a wheel, installs it in a fresh virtual environment, and runs the comp
 
 ```sh
 python -m pip wheel --no-deps --wheel-dir dist .
-python tests/smoke_installed.py dist/manufacturingos-0.1.0-py3-none-any.whl
+python tests/smoke_installed.py dist/manufacturingos-0.2.0-py3-none-any.whl
 ```
 
 ## Run

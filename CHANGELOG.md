@@ -1,5 +1,53 @@
 # Changelog
 
+## 0.2.0 — 2026-11-01
+
+Synthetic rehearsal checkpoint for the advisory prototype. This is a software
+release; the three real-world pilot milestones remain open.
+
+- One-command temporary pilot rehearsal with a combined offline review, scorecard,
+  explicit failure phases and complete retained fitting/source provenance.
+- Four planning cases: reference agreement, deliberate cost discrepancy, missed
+  production target and an assumed second-machine capacity remedy.
+- Read-only synthetic CSV intake and a loopback mock ERP/MES API, with ephemeral
+  read credentials, scope checks and credential-free request/transport records.
+- Nine source/access/transport failures rejected before intake/model execution,
+  without automatic retry or fabricated fallback results.
+- Separate synthetic fitting and held-out evaluation with a frozen candidate,
+  overlap/mutation guards and retained baseline/candidate residuals.
+- Source-file fingerprints, available Git context and Python/platform metadata;
+  source changes during a run prevent a successful scorecard.
+- Complete rehearsal verification: exact file inventory, eight reconstructed study
+  bundles, loose/bundled report agreement and cross-checked scorecards/provenance.
+- Chromium checks at mobile, tablet and desktop widths, screenshot artifacts and
+  a reviewed responsive case comparison.
+
+### Scope and remaining gates
+
+All reference data is synthetic. Mock read credentials are not enterprise
+identities; the loopback server is not a live ERP/MES connector. Models remain
+uncalibrated. The capacity remedy assumes equipment/staffing and excludes purchase,
+installation and added fixed costs. Hashes and reconstruction establish supplied
+content consistency, not source authenticity, signed approvals or production
+acceptance. The runnable examples require a source checkout and are not installed
+runtime CLI commands; runtime dependencies remain empty.
+
+Three major milestones remain: authorized real reference data and qualified
+calibration; controlled read-only enterprise integration and security acceptance;
+and an actual shadow pilot with measured outcomes and qualified acceptance.
+
+### Validation baseline
+
+311 automated tests; complete synthetic rehearsal and eight study bundle
+reconstructions; Chromium checks and screenshot generation; independent core
+schema checks; wheel build and isolated installed CLI workflow. CI covers Python
+3.11–3.13. Selected earlier screenshots have visual review; automated screenshots
+for every subsequent revision do not imply a new human visual sign-off.
+
+The annotated `v0.2.0` tag is created once after successful main-push CI. Existing
+tags, including `v0.1.0`, are preserved. This does not publish to PyPI, deploy a
+service or grant manufacturing authorization.
+
 ## 0.1.0 — 2026-11-01
 
 Initial alpha release of the advisory ManufacturingOS prototype.
