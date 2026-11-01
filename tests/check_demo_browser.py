@@ -25,13 +25,21 @@ def main():
             page.set_viewport_size({"width": width, "height": 900})
             page.goto((pilot / "index.html").as_uri(), wait_until="load")
             assert page.title() == "ManufacturingOS — synthetic pilot rehearsal"
-            assert page.locator("tbody tr").count() == 5
+            assert page.locator("tbody tr").count() == 6
             assert "Software rehearsal only" in page.locator(".notice").inner_text()
-            assert page.locator("a").count() == 12
+            assert page.locator("a").count() == 14
             for href in page.locator("a").evaluate_all("links => links.map(link => link.getAttribute('href'))"):
                 assert (pilot / href).is_file(), f"Missing combined review link: {href}"
             assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
             page.screenshot(path=str(screenshots / f"pilot-{width}.png"), full_page=True)
+        for width in (375, 768, 1440):
+            page.set_viewport_size({"width": width, "height": 900})
+            page.goto((pilot / "api-failures/index.html").as_uri(), wait_until="load")
+            assert page.title() == "Mock API failure rehearsal"
+            assert page.locator("tbody tr").count() == 6
+            assert "Rejected before study" in page.locator("body").inner_text()
+            assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+            page.screenshot(path=str(screenshots / f"api-failures-{width}.png"), full_page=True)
         for width in (375, 768, 1440):
             page.set_viewport_size({"width": width, "height": 900})
             page.goto((root / "index.html").as_uri(), wait_until="load")
@@ -67,7 +75,7 @@ def main():
             page.screenshot(path=str(screenshots / f"{case}-review.png"), full_page=True)
         assert not errors, errors
         browser.close()
-    print("Chromium: 3 viewport checks, 14 local links, 4 review navigations; 10 screenshots saved, including the combined review at 3 widths.")
+    print("Chromium: 3 viewport checks, 14 local links, 4 review navigations; 13 screenshots saved, including combined and failure reviews at 3 widths.")
     print("Automated browser checks passed; screenshots still require human visual review.")
 
 

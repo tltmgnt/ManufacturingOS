@@ -58,3 +58,26 @@ connector, select the system and supported API, authorize a dataset and read-onl
 service identity, define scope/refresh/retry limits, and complete source, access,
 audit and security review. Production authorization and live integration completion
 remain false throughout this rehearsal.
+
+## Failure rehearsal
+
+```sh
+python -m examples.mock_api_failures --output runs/api-failures
+```
+
+The combined pilot command also runs six deliberately failing mock cases: invalid
+credentials (401), insufficient read scope (403), throttling (429), service
+unavailable (503), stale source revision (HTTP 200 but rejected metadata), and
+hash mismatch (HTTP 200 but rejected content consistency). The server can inject
+these fixed local fixture faults; no arbitrary upstream host is introduced.
+
+Open `api-failures/index.html` in the combined output. Each case must make exactly
+one GET, reject the source before the intake/model pipeline, create no study
+output directory, and preserve a credential-free error/audit record. A software
+PASS means the expected failure was detected. Partial results are not substituted
+with model estimates, and there is no automatic retry, including for Retry-After.
+
+The invalid-credential case represents a rejected token; real identity-provider
+expiry, renewal and revocation are not implemented. Real service recovery, timeout
+and network-partition behavior still require integration-specific testing. Source
+rejection does not claim an enterprise security or availability certification.
