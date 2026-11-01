@@ -23,7 +23,7 @@ def encode(value):
 def render_summary(summary):
     """Offline landing page; case paths are fixed by the runner, values escaped."""
     paths = {"baseline": "baseline", "cost-disagreement": "cost-disagreement",
-             "target-miss": "target-miss"}
+             "target-miss": "target-miss", "capacity-remedy": "capacity-remedy"}
     rows = []
     for case in summary["cases"]:
         path = paths[case["case"]]
@@ -65,7 +65,7 @@ caption {text-align:left;font-weight:600;margin:1rem 0} small {color:#374c65}
 <p class="notice"><strong>Synthetic data only.</strong> Empirical calibration is incomplete.
 Production authorization is false for every case. Software agreement does not approve a production plan.</p>
 <p>Three brackets pass through cutting and finishing. Compare reference agreement,
-cost disagreement, and a production shortfall at the five-hour deadline.</p>
+cost disagreement, a production shortfall and an assumed capacity remedy at the five-hour deadline.</p>
 <div class="scroll"><table><caption>Case outcomes · costs and residuals in USD</caption>
 <thead><tr><th scope="col">Case</th><th scope="col">Reference</th><th scope="col">Good / target at 5 h</th>
 <th scope="col">Target</th><th scope="col">Model / reference cost</th><th scope="col">Cost residual</th>
@@ -75,7 +75,10 @@ cost disagreement, and a production shortfall at the five-hour deadline.</p>
 <h2>Interpret the outcomes</h2>
 <ul><li>Baseline: agreement still requires human review.</li>
 <li>Cost disagreement: the deliberately declared 220 USD reference differs from the 225 USD model by +5 USD.</li>
-<li>Target miss: reference agreement coexists with a shortfall; only two of three requested brackets finish by hour five.</li></ul>
+<li>Target miss: reference agreement coexists with a shortfall; only two of three requested brackets finish by hour five.</li>
+<li>Capacity remedy: assuming a second identical finishing machine, all three finish by hour five.
+The 225 USD processing cost excludes equipment purchase, installation and extra fixed costs;
+resource availability and staffing are unverified.</li></ul>
 <p>Each bundle has been checked for content consistency and reconstruction. This does not establish source authenticity or approval.</p>
 <p><a href="summary.json">Machine-readable summary</a> · <a href="README.txt">Run notes</a></p>
 <small>Offline review. Keep this page with its case directories so relative links work.</small>
@@ -111,6 +114,21 @@ def run_demo(output: Path) -> dict:
         target_miss["manufacturing_input"], target_miss["scenario"])["scenario_fingerprint"]
     target_reference["context"]["simulation_config_fingerprint"] = digest(target_miss["simulation"])
     bind_synthetic_reference(target_miss, target_reference)
+    remedy = deepcopy(target_miss)
+    remedy["revision"] = "synthetic-capacity-remedy-1"
+    remedy["scenario"]["revision"] = "capacity-remedy-1"
+    remedy["scenario"]["operations"][1]["machines"] = 2
+    remedy["scenario"]["assumptions"].append(
+        "Synthetic capacity remedy assumes a second identical finishing machine and sufficient staffing; "
+        "purchase, installation and additional fixed costs are excluded and resource availability is unverified.")
+    remedy_reference = deepcopy(target_reference)
+    remedy_reference["metrics"]["good_by_horizon"]["value"] = 3
+    remedy_reference["metrics"]["wip_at_horizon"]["value"] = 0
+    remedy_reference["metrics"]["batch_completion_time"]["value"] = 5
+    remedy_reference["context"]["scenario_fingerprint"] = binding(
+        remedy["manufacturing_input"], remedy["scenario"])["scenario_fingerprint"]
+    bind_synthetic_reference(remedy, remedy_reference)
+
 
     # Refuse to mix this run with previous results or overwrite existing files.
     output.mkdir(parents=True, exist_ok=False)
@@ -118,7 +136,8 @@ def run_demo(output: Path) -> dict:
                "production_authorized": False, "cases": []}
     for name, spec, expected in [("baseline", baseline, "PASS"),
                                  ("cost-disagreement", disagreement, "FAIL"),
-                                 ("target-miss", target_miss, "PASS")]:
+                                 ("target-miss", target_miss, "PASS"),
+                                 ("capacity-remedy", remedy, "PASS")]:
         directory = output / name
         directory.mkdir()
         preflight = preflight_study(spec)
@@ -135,6 +154,11 @@ def run_demo(output: Path) -> dict:
                 report["review_state"] != "REVISION_REQUIRED" or
                 "SIMULATED_TARGET_MISS" not in {row["code"] for row in report["findings"]}):
             raise RuntimeError("Reference agreement hid the synthetic production shortfall")
+        if name == "capacity-remedy" and (not simulation["target_met"] or
+                simulation["good_by_horizon"] != 3 or simulation["wip_at_horizon"] != 0 or
+                simulation["batch_completion_time"]["value"] != 5 or
+                cost["model_mean"]["value"] != 225 or report["review_state"] != "HUMAN_REVIEW"):
+            raise RuntimeError("Synthetic capacity remedy did not produce its hand-derived outcome")
         archive = build_bundle(spec)
         verification = verify_bundle(archive)
         for filename, value in [("study-input.json", spec), ("preflight.json", preflight),
@@ -148,6 +172,8 @@ def run_demo(output: Path) -> dict:
                                  "target_good_units": simulation["target_good_units"],
                                  "good_by_horizon": simulation["good_by_horizon"],
                                  "target_met": simulation["target_met"],
+                                 "batch_completion_time": simulation["batch_completion_time"],
+                                 "finishing_machines": spec["scenario"]["operations"][1]["machines"],
                                  "cost_comparison": cost, "bundle_status": verification["status"]})
     (output / "summary.json").write_bytes(encode(summary))
     (output / "index.html").write_text(render_summary(summary), encoding="utf-8")
@@ -156,6 +182,7 @@ def run_demo(output: Path) -> dict:
         "baseline: reference agreement; human review remains required.\n"
         "cost-disagreement: deliberately changed synthetic reference; expected FAIL, residual +5 USD.\n"
         "target-miss: reference PASS but only 2 of 3 requested brackets by hour 5; revision required.\n"
+        "capacity-remedy: assumes a second finishing machine; 3 of 3 by hour 5; capex/fixed additions excluded.\n"
         "Open index.html to compare all cases and follow links to their reviews.\n"
         "Each case contains an offline study-review.html and verified study-review.zip.\n"
         "Production authorization remains false in all cases.\n", encoding="utf-8")
