@@ -40,7 +40,7 @@ def main():
         version=run([executable,'--version']).strip()
         location=run([python,'-c','import manufacturing_os; print(manufacturing_os.__file__)']).strip()
         assert Path(location).resolve().is_relative_to(environment.resolve()), location
-        for command in ['plan','estimate','experiment','simulate','study','review','compare','bundle','evidence','sources','capture','notes']:
+        for command in ['plan','estimate','experiment','simulate','study','review','compare','bundle','evidence','sources','capture','notes','replicate']:
             run([executable,command,'--help'])
         evidence=json.loads(run([executable,'evidence',ROOT/'examples/evidence-input.json',ROOT/'examples/evidence-policy.json']))
         assert evidence['status']=='METADATA_CHECKS_PASSED'
@@ -56,6 +56,10 @@ def main():
         batch_costs=json.loads(run([executable,'simulate',ROOT/'examples/finite-batch-costs.json']))['cost_report']
         assert batch_costs['scope']=='FULL_SIMULATED_BATCH'
         assert batch_costs['unit_cost'] is not None
+        replicated=json.loads(run([executable,'replicate',ROOT/'examples/replication-experiment.json']))
+        assert replicated['run_count']==20
+        replay=json.loads(run([executable,'replicate',ROOT/'examples/replication-experiment.json','--replay','0']))
+        assert replay['input']['seed']==replicated['outcomes'][0]['seed']
         before=working/'before.json'
         after=working/'after.json'
         review=working/'review.html'

@@ -69,6 +69,8 @@ def compare_studies(before: dict, after: dict) -> dict:
         "SIMULATION_CONFIG_CHANGED": (first["simulation"], second["simulation"]),
         "UNCERTAINTY_CONFIG_CHANGED": (first["uncertainty"], second["uncertainty"]),
         "REFERENCE_SUITE_CHANGED": (first["reference_suite"], second["reference_suite"]),
+        **({"REPLICATION_CONFIG_CHANGED":(first.get("replications"),second.get("replications"))}
+           if "replications" in first or "replications" in second else {}),
         **({"EVIDENCE_POLICY_CHANGED": (first.get("evidence_policy"), second.get("evidence_policy"))}
            if "evidence_policy" in first or "evidence_policy" in second else {}),
         **({"EVIDENCE_SNAPSHOT_CHANGED": (first.get("evidence_snapshot"), second.get("evidence_snapshot"))}

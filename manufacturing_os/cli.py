@@ -17,6 +17,7 @@ COMMANDS = {
     "sources": ("sources", "Verify captured evidence bytes against declared hashes"),
     "capture": ("capture", "Capture manifest-selected files into a source snapshot"),
     "notes": ("notes", "Record or check revision-bound reviewer feedback"),
+    "replicate": ("replications", "Repeat finite-batch simulation across recorded seeds"),
 }
 
 

@@ -81,3 +81,12 @@ jobs:
           name: synthetic-cost-review-python-${{ matrix.python-version }}
           path: ci-cost-bundle.zip
           if-no-files-found: error
+      - run: python -m manufacturing_os.cli replicate examples/replication-experiment.json
+      - run: python -m manufacturing_os.cli replicate examples/replication-experiment.json --replay 0
+      - run: python -m manufacturing_os.cli bundle create examples/replication-study.json --output ci-replicated-bundle.zip
+      - run: python -m manufacturing_os.cli bundle verify ci-replicated-bundle.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-replicated-review-python-${{ matrix.python-version }}
+          path: ci-replicated-bundle.zip
+          if-no-files-found: error

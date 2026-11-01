@@ -11,6 +11,7 @@ from .experiments import simulate, validate_references
 from .models import ManufacturingInput, digest
 from .simulation import simulate_batch
 from .sources import verify_sources
+from .replications import run_replications
 
 STUDY_VERSION = "integrated-study-1.0"
 
@@ -22,7 +23,7 @@ def binding(package: dict, scenario: dict) -> dict:
 
 
 def run_study(spec: dict) -> dict:
-    optional = set(spec) & {"evidence_policy", "evidence_snapshot"} if isinstance(spec, dict) else set()
+    optional = set(spec) & {"evidence_policy", "evidence_snapshot", "replications"} if isinstance(spec, dict) else set()
     fields(spec, {"schema_version", "study_id", "revision", "manufacturing_input", "scenario", "binding",
                   "simulation", "uncertainty", "reference_suite"} | optional, "study")
     if "evidence_snapshot" in optional and "evidence_policy" not in optional:
@@ -51,6 +52,11 @@ def run_study(spec: dict) -> dict:
                          "revision": spec["revision"], "scenario": deepcopy(spec["scenario"]), **spec["uncertainty"]}
     batch = simulate_batch(simulation_input)
     exploration = simulate(uncertainty_input)
+    replication_report = None
+    if "replications" in optional:
+        fields(spec["replications"], {"runs"}, "study replications")
+        replication_report = run_replications({"schema_version":"1.0", "experiment_id":spec["study_id"]+"/replications",
+                                               "revision":spec["revision"], "runs":spec["replications"]["runs"], "simulation":simulation_input})
     references = None
     if spec["reference_suite"] is not None:
         references = validate_references(spec["reference_suite"])
@@ -75,6 +81,16 @@ def run_study(spec: dict) -> dict:
         if batch["cost_report"]["unit_cost"] is None:
             findings.append({"code": "SIMULATED_UNIT_COST_UNDEFINED", "severity": "REVIEW", "component": "simulation",
                              "message": batch["cost_report"]["unit_cost_issue"]})
+    if replication_report is not None:
+        findings.append({"code":"REPLICATION_SCOPE", "severity":"REVIEW", "component":"replications",
+                         "message":"Repeated seeded simulations describe model variation, not calibrated manufacturing probabilities or observed service levels."})
+        if replication_report["target_missed_runs"]:
+            findings.append({"code":"REPLICATED_TARGET_MISSES", "severity":"REVIEW", "component":"replications",
+                             "message":str(replication_report["target_missed_runs"])+" seeded runs missed the reporting-horizon target."})
+        unit_summary = replication_report["summary"].get("full_batch_unit_cost")
+        if unit_summary and unit_summary["undefined_runs"]:
+            findings.append({"code":"REPLICATED_UNIT_COST_UNDEFINED", "severity":"REVIEW", "component":"replications",
+                             "message":"Some runs have no eventual good output; unit cost statistics exclude those undefined values and retain their count."})
     if plan.verification.status == "FAIL":
         findings.append({"code": "PLAN_VERIFICATION_FAILED", "severity": "BLOCKING", "component": "plan",
                          "message": "Original plan verification failed; inspect plan verification findings and conflict records."})
@@ -131,6 +147,8 @@ def run_study(spec: dict) -> dict:
         result["evidence_report"] = evidence_report
     if source_report is not None:
         result["source_report"] = source_report
+    if replication_report is not None:
+        result["replication_report"] = replication_report
     return result
 
 

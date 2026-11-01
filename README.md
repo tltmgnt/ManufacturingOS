@@ -18,7 +18,7 @@ manufacturing-os bundle create examples/integrated-study.json --output study-bun
 manufacturing-os bundle verify study-bundle.zip
 ```
 
-On Windows, activate with `.venv\Scripts\activate` instead. Commands are `plan`, `estimate`, `experiment`, `simulate`, `study`, `review`, `compare`, `bundle`, `evidence`, `sources`, `capture`, and `notes`; each supports `--help` and preserves its component's arguments and exit codes. `python -m manufacturing_os.cli` provides the same router. Existing module commands below continue to work, including the original `python -m manufacturing_os INPUT` planning interface.
+On Windows, activate with `.venv\Scripts\activate` instead. Commands are `plan`, `estimate`, `experiment`, `simulate`, `study`, `review`, `compare`, `bundle`, `evidence`, `sources`, `capture`, `notes`, and `replicate`; each supports `--help` and preserves its component's arguments and exit codes. `python -m manufacturing_os.cli` provides the same router. Existing module commands below continue to work, including the original `python -m manufacturing_os INPUT` planning interface.
 
 The package has no third-party runtime dependencies. Building from source uses setuptools and wheel; pip may fetch build tools in its isolated build environment. To install a downloaded CI wheel offline, use `python -m pip install --no-index --no-deps PATH_TO_WHEEL.whl`. Input examples remain in the source checkout and are not installed as package data; pass your own JSON paths when running elsewhere. The versioned prototype is not published to PyPI by this workflow.
 
@@ -290,3 +290,21 @@ A hand-calculated three-job reference charges $15 material, $90 cutting, and $12
 These costs are separate from steady-state expected-value estimates. Studies retain an explicit `FULL_BATCH_COST_SCOPE` finding, and undefined unit cost gets its own finding. HTML shows component costs and assumptions. Comparisons add full-batch deltas only when both studies enable costing, preserve undefined values, and require matching units/currencies. No overhead, tax, rework, overtime, inventory valuation, quoted pricing, or margin model is included. Estimates remain unvalidated and grant no production approval.
 
 No-cost inputs retain their previous report and bundle contents. CI and the installed-wheel smoke test exercise cost-enabled simulation, while CI publishes a synthetic cost-review bundle.
+
+## Repeated seeded finite-batch simulations
+
+```sh
+manufacturing-os replicate examples/replication-experiment.json --output repeated-runs.json
+manufacturing-os replicate examples/replication-experiment.json --replay 0 --output first-run.json
+manufacturing-os bundle create examples/replication-study.json --output repeated-study.zip
+```
+
+Replication experiments contain a schema version, experiment ID/revision, `runs`, and one complete `simulation` template. Routes, parameters, calendars, batch size, and costing stay fixed; only the seed changes. Run index `i` uses `(template_seed + i) modulo 2**32`, with a separate local RNG per simulation. Every outcome records its index, seed, input fingerprint, full-report hash, target attainment, horizon good/scrap/WIP, eventual output, batch completion, and optional full-batch costs. Replay returns the full original simulation and timelines for an index.
+
+Summaries report min, mean, p05, median, p95, and max with units, plus defined/undefined run counts. Quantiles use linear interpolation at `(n-1)*p`. Unit costs from no-good-output runs remain `null`; statistics include only defined values and are unavailable when all runs are undefined. Total batch costs remain defined, even when no good output completes. Full-batch cost scope includes events beyond the reporting horizon.
+
+The target-met fraction describes these seeded model outcomes. It is not a calibrated manufacturing probability, measured service level, or confidence interval. Unlike the independent-uniform input uncertainty experiment, replications do not vary the configured parameters. Both depend on unvalidated model assumptions and need empirical calibration before operational use.
+
+Studies can opt in with `replications: {"runs": 20}`. The report uses the exact study simulation template; run zero reproduces its baseline simulation. Findings retain replication scope, sampled target misses, and undefined unit costs. HTML shows defined-value summaries and counts, comparisons flag replication configuration changes, and bundles reconstruct all outcomes. Source timelines are replayable instead of duplicated into every outcome row. Studies without replications retain their previous output.
+
+Experiments allow 1 to 1,000 runs. Aggregate scheduling work is limited to `runs * (batch_size * operation_count + total_machines) <= 2,000,000`; calendar work additionally requires `runs * batch_size * (total_machines + window_count) <= 2,000,000`. The existing per-simulation limits also apply. This bounds repeated work before execution. Invalid inputs, indexes, limits, and I/O errors exit `2`; completed replication/replay exits `0` regardless of sampled target misses. Optional output creation is exclusive. CI and installed-wheel checks exercise replications, replay, and a downloadable synthetic study bundle.
