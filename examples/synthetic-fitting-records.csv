@@ -1,0 +1,4 @@
+data_kind,batch_id,operation_id,cycle_time_h
+synthetic,fit-batch-001,finish,2
+synthetic,fit-batch-002,finish,2
+synthetic,fit-batch-003,finish,2
