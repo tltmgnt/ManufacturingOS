@@ -93,3 +93,76 @@ class RehearsalIntegrityTests(unittest.TestCase):
             self.skipTest("Symlinks unavailable")
         with self.assertRaisesRegex(ValueError, "symlinks"):
             verify_rehearsal(self.root)
+
+    def rewrite_json(self, name, mutate):
+        path = self.root / name
+        value = json.loads(path.read_text())
+        mutate(value)
+        path.write_text(json.dumps(value))
+
+    def rewrite_component(self, name, file, mutate):
+        self.rewrite_json(file, mutate)
+        def update_scorecard(scorecard):
+            mutate(scorecard[name])
+        self.rewrite_json("rehearsal-scorecard.json", update_scorecard)
+        write_manifest(self.root, replace=True)
+
+    def test_combined_summary_must_match_its_component_summary(self):
+        self.rewrite_json("rehearsal-scorecard.json", lambda value: value["planning"]["cases"][2].update(target_met=True))
+        write_manifest(self.root, replace=True)
+        with self.assertRaisesRegex(ValueError, "Combined planning scorecard"):
+            verify_rehearsal(self.root)
+
+    def test_matching_summary_edits_cannot_hide_a_reported_target_miss(self):
+        self.rewrite_component("planning", "planning/summary.json", lambda value: value["cases"][2].update(target_met=True))
+        with self.assertRaisesRegex(ValueError, "Planning outcomes"):
+            verify_rehearsal(self.root)
+
+    def test_calibration_residuals_must_match_the_verified_reports(self):
+        self.rewrite_component("calibration", "calibration/rehearsal-summary.json", lambda value: value["outcomes"][0]["cost_residual"].update(value=0))
+        with self.assertRaisesRegex(ValueError, "Held-out residual scorecard"):
+            verify_rehearsal(self.root)
+
+    def test_request_audit_cannot_claim_a_write_request(self):
+        self.rewrite_json("api/mock-request-audit.json", lambda value: value["requests"][0].update(method="POST"))
+        write_manifest(self.root, replace=True)
+        with self.assertRaisesRegex(ValueError, "Read-only API audit"):
+            verify_rehearsal(self.root)
+
+    def test_transport_hash_must_match_retained_export(self):
+        self.rewrite_json("api/transport-provenance.json", lambda value: value.update(sha256="0" * 64))
+        self.rewrite_component("api", "api/api-rehearsal-summary.json", lambda value: value["transport"].update(sha256="0" * 64))
+        with self.assertRaisesRegex(ValueError, "retained export bytes"):
+            verify_rehearsal(self.root)
+
+    def test_failure_scorecard_must_retain_no_model_execution(self):
+        self.rewrite_component("api_failures", "api-failures/failure-scorecard.json", lambda value: value["cases"][0].update(model_executed=True))
+        with self.assertRaisesRegex(ValueError, "expected rejection"):
+            verify_rehearsal(self.root)
+
+    def test_failed_software_check_cannot_coexist_with_overall_success(self):
+        self.rewrite_json("rehearsal-scorecard.json", lambda value: value["software_checks"][0].update(result="FAIL"))
+        write_manifest(self.root, replace=True)
+        with self.assertRaisesRegex(ValueError, "software check results"):
+            verify_rehearsal(self.root)
+
+    def test_heldout_provenance_must_match_frozen_candidate(self):
+        self.rewrite_json("calibration/heldout-provenance.json", lambda value: value.update(frozen_candidate_fingerprint="0" * 64))
+        write_manifest(self.root, replace=True)
+        with self.assertRaisesRegex(ValueError, "Held-out provenance"):
+            verify_rehearsal(self.root)
+
+    def test_loose_source_bytes_must_match_captured_evidence(self):
+        path = self.root / "intake/source-export.csv"
+        path.write_bytes(path.read_bytes().replace(b",7,225", b",7,220"))
+        write_manifest(self.root, replace=True)
+        with self.assertRaisesRegex(ValueError, "captured study evidence"):
+            verify_rehearsal(self.root)
+
+
+    def test_intake_provenance_cannot_grant_authorization(self):
+        self.rewrite_json("intake/intake-provenance.json", lambda value: value.update(production_authorized=True))
+        self.rewrite_json("rehearsal-scorecard.json", lambda value: value["intake"].update(production_authorized=True))
+        write_manifest(self.root, replace=True)
+        with self.assertRaisesRegex(ValueError, "Intake provenance claimed authorization"):
+            verify_rehearsal(self.root)
