@@ -69,9 +69,47 @@ def parse_downtime(data: object, scenario: Scenario, size: int) -> tuple[dict, l
     return calendars, normalized
 
 
+def full_batch_costs(scenario: Scenario, size: int, operations: list[dict], good_units: int) -> dict:
+    """Nominal active-work costs for the whole released batch, not a period P&L."""
+    rows = []
+    for op, result in zip(scenario.operations, operations):
+        count = len(result["timeline"])
+        setup = op.setup_hours*op.machines
+        processing = count*op.cycle_hours
+        billable = setup+processing
+        machine = billable*op.machine_rate
+        labor = billable*op.labor_rate
+        rows.append({"operation_id":op.operation_id,"processed_input":quantity(count,"piece"),
+                     "planned_setup_time":quantity(setup,"h"),"processing_time":quantity(processing,"h"),
+                     "nominal_billable_time":quantity(billable,"h"),"machine_cost":quantity(machine,scenario.currency),
+                     "labor_cost":quantity(labor,scenario.currency),"total_cost":quantity(machine+labor,scenario.currency)})
+    material = size*scenario.material_cost_per_start
+    machine = math.fsum(row["machine_cost"]["value"] for row in rows)
+    labor = math.fsum(row["labor_cost"]["value"] for row in rows)
+    total = math.fsum((material,machine,labor))
+    return {"schema_version":"1.0","cost_model_version":"full-batch-active-cost-1.0",
+            "scope":"FULL_SIMULATED_BATCH","released_input":quantity(size,"piece"),
+            "eventual_good_output":quantity(good_units,"piece"),"eventual_scrap":quantity(size-good_units,"piece"),
+            "material_cost":quantity(material,scenario.currency),"machine_cost":quantity(machine,scenario.currency),
+            "labor_cost":quantity(labor,scenario.currency),"total_cost":quantity(total,scenario.currency),
+            "unit_cost":quantity(total/good_units,f"{scenario.currency}/good_piece") if good_units else None,
+            "unit_cost_unit":f"{scenario.currency}/good_piece",
+            "unit_cost_issue":None if good_units else "No eventual good output; cost per good unit is undefined.",
+            "operations":rows,"assumptions":[
+                "All released pieces incur entry material cost; downstream processing charges only jobs reaching that operation.",
+                "One planned setup per configured machine is charged, even for machines or downstream operations receiving no jobs.",
+                "Machine and dedicated labor rates charge nominal setup and processing hours, not queue, idle, or downtime hours.",
+                "Availability duration-stretching is not an additional billable-hours factor.",
+                "Costs include the entire batch and future events beyond the reporting horizon; no horizon cost allocation is performed.",
+                "No overhead, tax, inventory valuation, rework, overtime, or external quoted-price model is included."],
+            "validation_status":"UNVALIDATED_ESTIMATE","production_authorized":False}
+
+
 def simulate_batch(spec: dict) -> dict:
-    optional = {"downtime"} if isinstance(spec, dict) and "downtime" in spec else set()
+    optional = set(spec) & {"downtime", "include_costs"} if isinstance(spec, dict) else set()
     fields(spec, {"schema_version", "simulation_id", "revision", "seed", "batch_size", "scenario"} | optional, "batch simulation")
+    if "include_costs" in optional and type(spec["include_costs"]) is not bool:
+        raise ValueError("include_costs must be boolean")
     if spec["schema_version"] != "1.0":
         raise ValueError("unsupported simulation schema")
     for name in ("simulation_id", "revision"):
@@ -153,7 +191,7 @@ def simulate_batch(spec: dict) -> dict:
                            "mean_full_batch_queue_wait": quantity(math.fsum(row["queue_wait_hours"]/len(records) for row in records) if records else 0.0, "h"),
                            "occupied_fraction_by_machine": [quantity(time/horizon, "fraction") for time in busy],
                            "timeline": records})
-        if optional:
+        if "downtime" in optional:
             operations[-1]["setup_intervals"] = [{"machine_id": index, "start_hours": start, "finish_hours": start+setup_end}
                                                    for index,start in enumerate(setup_starts)]
         arrivals = next_arrivals
@@ -191,8 +229,10 @@ def simulate_batch(spec: dict) -> dict:
                 "Events exactly at the horizon count as completed/started; occupancy includes setup and processing.",
                 "Full-batch timelines include future events beyond the reporting horizon."],
             "validation_status": "UNVALIDATED_SIMULATION", "production_authorized": False}
-    if optional:
+    if "downtime" in optional:
         result["normalized_downtime"] = normalized_downtime
+    if spec.get("include_costs", False):
+        result["cost_report"] = full_batch_costs(scenario,size,operations,len(final_times))
     return result
 
 

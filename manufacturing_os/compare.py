@@ -96,7 +96,7 @@ def compare_studies(before: dict, after: dict) -> dict:
         sources[label] = {"study_id": report["study_id"], "study_revision": report["study_revision"],
                           "study_fingerprint": report["study_fingerprint"], "report_content_hash": digest(report),
                           "input": deepcopy(report["input"])}
-    return {"schema_version": "1.0", "comparison_version": COMPARE_VERSION, "product_id": old_product,
+    result = {"schema_version": "1.0", "comparison_version": COMPARE_VERSION, "product_id": old_product,
             "sources": sources, "input_changes": input_changes(first, second), "context_changes": context,
             "estimates": estimates, "finite_batch": batch, "operations": operation_changes,
             "findings": finding_changes(before["findings"], after["findings"]),
@@ -111,6 +111,19 @@ def compare_studies(before: dict, after: dict) -> dict:
                             "Input arrays are compared positionally; operation estimate rows are matched by stable operation_id.",
                             "Input changes are exact JSON differences, including revisions, bindings, list order, and source metadata."],
             "approval_state": "PENDING_HUMAN_REVIEW", "production_authorized": False}
+    old_cost, new_cost = before["simulation"].get("cost_report"), after["simulation"].get("cost_report")
+    if old_cost is not None or new_cost is not None:
+        metrics = {}
+        if old_cost is not None and new_cost is not None:
+            for key in ("material_cost","machine_cost","labor_cost","total_cost","unit_cost"):
+                left,right = old_cost[key],new_cost[key]
+                metrics[key] = quantity_delta(left,right) if left is not None and right is not None else {
+                    "before":deepcopy(left),"after":deepcopy(right),"delta":None,"comparison":"UNDEFINED_INPUT",
+                    "issue":"One or both unit costs are undefined because no good output completed."}
+        result["finite_batch_costs"] = {"before_available":old_cost is not None,"after_available":new_cost is not None,
+                                        "scope":"FULL_SIMULATED_BATCH","metrics":metrics,
+                                        "issue":None if old_cost is not None and new_cost is not None else "Costing was not enabled for both studies; no deltas computed."}
+    return result
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -73,3 +73,11 @@ jobs:
           name: synthetic-downtime-review-python-${{ matrix.python-version }}
           path: ci-downtime-bundle.zip
           if-no-files-found: error
+      - run: python -m manufacturing_os.cli simulate examples/finite-batch-costs.json
+      - run: python -m manufacturing_os.cli bundle create examples/cost-study.json --output ci-cost-bundle.zip
+      - run: python -m manufacturing_os.cli bundle verify ci-cost-bundle.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-cost-review-python-${{ matrix.python-version }}
+          path: ci-cost-bundle.zip
+          if-no-files-found: error

@@ -271,3 +271,22 @@ Calendar operations must have `availability=1` to prevent double-counting downti
 Integrated studies accept the same calendar under `simulation.downtime`; HTML shows normalized intervals and comparisons flag the changed simulation configuration. Scheduled windows affect only the finite-batch model: the steady-state economic/capacity and uncertainty models exclude them, with an explicit `DOWNTIME_SCOPE` review finding. The example's maintenance window causes a simulated target miss and a revision-required study; packaging/verification still succeeds while retaining that state.
 
 Reports retain normalized calendars and per-machine setup intervals for inspection. No-calendar inputs preserve their previous output. This remains an unvalidated simulator: calendars are supplied assumptions, not live equipment schedules, and no recurring shifts, random failures, shared resources, or equipment commands are implemented.
+
+## Full simulated batch economics
+
+```sh
+manufacturing-os simulate examples/finite-batch-costs.json --output batch-costs.json
+manufacturing-os bundle create examples/cost-study.json --output cost-study.zip
+```
+
+Set `include_costs: true` on a finite-batch input (or `simulation.include_costs` in a study) to add `cost_report`. The flag must be boolean. Absent/false leaves costing disabled. Calendar setup intervals remain controlled by the separate optional `downtime` field.
+
+The full-batch model charges every released piece for entry material. Each operation charges nominal processing hours for the actual jobs reaching it, plus one planned setup per configured machine, even if that machine or downstream operation receives no jobs. Machine and dedicated labor costs use the scenario's supplied hourly rates. Queueing, idle periods, scheduled downtime, and availability duration-stretching add no billable active hours. These are explicit model assumptions, not universal accounting rules.
+
+Costs include the entire released batch and all future simulated operations, including events beyond the reporting horizon. Unit cost divides total batch cost by eventual good output, not good units at the horizon or the requested target. If no good units finish, `unit_cost` is `null` with an explanatory issue and declared unit; it is never zero-filled. Material, machine, labor, total, and per-operation costs retain units and a versioned `full-batch-active-cost-1.0` model identifier.
+
+A hand-calculated three-job reference charges $15 material, $90 cutting, and $120 finishing: total $225 and $75 per eventual good unit. At hour five only two jobs are good, while the third finishes at hour seven; the full-batch denominator remains three. Tests also check planned parallel-machine setups, upstream scrap reducing downstream work, zero rates, no-good-output cases, and downtime/availability not adding idle-hour charges.
+
+These costs are separate from steady-state expected-value estimates. Studies retain an explicit `FULL_BATCH_COST_SCOPE` finding, and undefined unit cost gets its own finding. HTML shows component costs and assumptions. Comparisons add full-batch deltas only when both studies enable costing, preserve undefined values, and require matching units/currencies. No overhead, tax, rework, overtime, inventory valuation, quoted pricing, or margin model is included. Estimates remain unvalidated and grant no production approval.
+
+No-cost inputs retain their previous report and bundle contents. CI and the installed-wheel smoke test exercise cost-enabled simulation, while CI publishes a synthetic cost-review bundle.

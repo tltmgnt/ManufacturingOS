@@ -68,6 +68,17 @@ def render_review(report: dict, notes: dict | None = None) -> str:
     if "normalized_downtime" in batch:
         calendar_html = "<p>Scheduled windows affect this finite-batch simulation; steady-state cost/capacity and uncertainty estimates exclude these windows.</p>"+table("Scheduled downtime (half-open intervals)", ["Operation", "Machine", "Start", "End"], [
             [text(row["operation_id"]), text(row["machine_id"]), measurement(row["start"]), measurement(row["end"])] for row in batch["normalized_downtime"]])
+    cost_html = ""
+    if "cost_report" in batch:
+        costs = batch["cost_report"]
+        cost_html = "<h3>Full simulated batch cost estimates</h3><p>These costs include the entire released batch and events beyond the reporting horizon; they are separate from steady-state estimates.</p>"
+        cost_html += table("Full-batch economics", ["Metric", "Value"], [
+            [text(key.replace("_"," ")), measurement(costs[key])] for key in ("released_input","eventual_good_output","eventual_scrap","material_cost","machine_cost","labor_cost","total_cost")]+[
+            ["Unit cost per eventual good unit", measurement(costs["unit_cost"]) if costs["unit_cost"] is not None else "Undefined: "+text(costs["unit_cost_issue"])],
+            ["Cost model",text(costs["cost_model_version"])]])
+        cost_html += table("Full-batch operation costs", ["Operation","Processed inputs","Planned setup","Nominal processing","Machine cost","Labor cost","Total cost"], [
+            [text(row["operation_id"]), measurement(row["processed_input"]), measurement(row["planned_setup_time"]), measurement(row["processing_time"]), measurement(row["machine_cost"]), measurement(row["labor_cost"]), measurement(row["total_cost"])] for row in costs["operations"]])
+        cost_html += "<ul>"+"".join(f"<li>{text(item)}</li>" for item in costs["assumptions"])+"</ul>"
     queues = table("Finite-batch queue summary", ["Operation", "Queued at horizon", "Processing at horizon", "Peak queue", "Full-batch mean wait"], [
         [text(row["operation_id"]),text(row["queued_at_horizon"]),text(row["processing_at_horizon"]),
          text(row["peak_queued_by_horizon"]),measurement(row["mean_full_batch_queue_wait"])] for row in batch["operations"]])
@@ -142,7 +153,7 @@ def render_review(report: dict, notes: dict | None = None) -> str:
 <nav aria-label='Report sections'><a href='#findings'>Findings</a><a href='#estimates'>Estimates</a><a href='#batch'>Finite batch</a><a href='#uncertainty'>Uncertainty</a><a href='#references'>References</a><a href='#plan'>Plan</a><a href='#provenance'>Provenance</a></nav>
 <main><section id=findings><h2>Review findings</h2><ul class=findings>{findings_html}</ul>{summary}</section>{notes_html}
 <section id=estimates><h2>Capacity and cost estimates</h2><p>Expected-value steady-state model; fractional starts are intentional. Costs are estimates in the declared currency.</p>{estimates}{capacity}</section>
-<section id=batch><h2>Finite-batch simulation</h2><p>Seed {text(report['input']['simulation']['seed'])}. This is one seeded outcome. Queue waits and eventual completion include events beyond the horizon.</p>{batch_summary}{calendar_html}{queues}</section>
+<section id=batch><h2>Finite-batch simulation</h2><p>Seed {text(report['input']['simulation']['seed'])}. This is one seeded outcome. Queue waits and eventual completion include events beyond the horizon.</p>{batch_summary}{calendar_html}{queues}{cost_html}</section>
 <section id=uncertainty><h2>Uncertainty exploration</h2><p>{text(uncertainty['sample_count'])} samples; seed {text(report['input']['uncertainty']['seed'])}. {text(uncertainty['feasible_samples'])} sampled scenarios fit steady-state capacity. This fraction is not a calibrated manufacturing risk probability. Percentiles describe sampled model outputs, not confidence intervals.</p>{ranges}{sampled}</section>
 <section id=references><h2>Synthetic reference checks</h2>{reference_html}</section>
 <section id=plan><h2>Original plan verification: {text(plan['verification']['status'])}</h2>{plan_findings}<h3>Conflicts</h3>{conflicts}{specialist}<h3>Required approval roles</h3>{approvals}</section>

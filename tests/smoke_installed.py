@@ -53,6 +53,9 @@ def main():
         downtime=json.loads(run([executable,'simulate',ROOT/'examples/finite-batch-downtime.json']))
         assert len(downtime['normalized_downtime'])==1
         assert downtime['target_met'] is False
+        batch_costs=json.loads(run([executable,'simulate',ROOT/'examples/finite-batch-costs.json']))['cost_report']
+        assert batch_costs['scope']=='FULL_SIMULATED_BATCH'
+        assert batch_costs['unit_cost'] is not None
         before=working/'before.json'
         after=working/'after.json'
         review=working/'review.html'
