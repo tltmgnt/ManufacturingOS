@@ -21,6 +21,7 @@ remain repository modules rather than installed runtime CLI commands.
 | --- | --- |
 | `index.html` | Combined review and explicit open real-world milestones |
 | `rehearsal-scorecard.json` | Software check results and full component summaries |
+| `rehearsal-manifest.json` | Exact retained-file inventory, byte sizes and hashes |
 | `source-provenance.json` | Source-file hashes/fingerprint, Git context and Python/platform metadata |
 | `run-status.json` | RUNNING, COMPLETE or FAILED with component phase |
 | `planning/` | Four cases: agreement, discrepancy, shortfall and assumed remedy |
@@ -75,3 +76,30 @@ are outside the source fingerprint. A dirty checkout needs its patch/source file
 preserved separately for reproduction; hashes alone do not recover missing code.
 The project version remains a release label and is not used as a substitute for
 this source fingerprint.
+
+## Verify a copied or downloaded rehearsal
+
+From the matching source checkout:
+
+```sh
+python -m examples.rehearsal_integrity runs/temporary-pilot
+```
+
+Verification exits 0 for VERIFIED_CONTENT and 2 for missing, modified, extra or
+inconsistent files. It checks the exact manifest inventory, complete/synthetic
+status, source fingerprints, all eight reconstructable study ZIPs, matching loose
+inputs/reports/HTML, and fitting/held-out reconstruction. It never extracts ZIPs.
+Paths, symlinks, regular-file types, counts and byte sizes are bounded. Limits are
+250 files/500 entries, 32 MiB per file and 128 MiB total; the manifest is limited
+to 256 KiB. Do not add notes inside a verified directory without creating a new
+reviewed artifact, since extra files invalidate the original inventory.
+
+The manifest excludes itself. It is a consistency inventory, not a signature:
+someone can replace files and recompute hashes. Reconstruction strengthens
+internal consistency but still does not authenticate origin, reviewer identity,
+organizational acceptance or production authorization. Source/environment changes
+can prevent reconstruction; use the recorded matching checkout and dependencies.
+
+CI verifies the complete matrix artifact before upload. The browser job refreshes
+its own manifest after adding screenshots, then verifies its diagnostic artifact.
+This internal refresh does not grant authenticity or authorization.

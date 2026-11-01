@@ -16,6 +16,7 @@ jobs:
       - run: python -m unittest discover -s tests -v
       - name: Run consolidated synthetic pilot rehearsal
         run: python -m examples.temporary_pilot --output runs/temporary-pilot
+      - run: python -m examples.rehearsal_integrity runs/temporary-pilot
       - uses: actions/upload-artifact@v4
         if: always()
         with:
