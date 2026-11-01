@@ -10,9 +10,10 @@ From a source checkout, using Python 3.11 or later:
 python -m examples.temporary_pilot --output runs/temporary-pilot
 ```
 
-Open `runs/temporary-pilot/index.html`. No external service connection, credentials or third-party runtime packages are
+Open `runs/temporary-pilot/index.html`. No external service connection, real credentials or third-party runtime packages are
 required. The API component briefly starts an HTTP server bound only to
-`127.0.0.1` on an automatically selected port and shuts it down after one GET. The example reads bundled fixtures
+`127.0.0.1` on an automatically selected port, uses an ephemeral mock read token held only
+in memory, and shuts down after one GET. The example reads bundled fixtures
 and creates a new output directory; existing output is preserved. The examples
 remain repository modules rather than installed runtime CLI commands.
 

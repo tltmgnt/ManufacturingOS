@@ -18,15 +18,16 @@ source export and verified study bundle.
 ## Transport contract
 
 - The server binds only `127.0.0.1` using an automatically selected port. It starts
-  for the rehearsal and shuts down afterward. No external host, credentials,
-  configuration URL or proxy is used.
-- The client sends exactly one GET to `/v1/batches/demo-batch-001/export`. The
+  for the rehearsal and shuts down afterward. No external host, real credentials, configuration URL or proxy is used. A fresh
+  random mock read token is created in memory for each run.
+- The client sends exactly one authorized GET to `/v1/batches/demo-batch-001/export`. The
   fixture returns CSV bytes with a fixed source revision, explicit content length
   and SHA-256 ETag. POST, PUT, PATCH and DELETE return 405; unknown paths return 404.
 - The client has a three-second socket timeout and a 64 KiB response limit. It
   rejects non-200 responses (including redirects and throttling), unexpected
   content type/revision, transfer encoding, invalid content length, hash mismatch
-  and invalid/non-synthetic export records. There is no automatic retry.
+  and invalid/non-synthetic export records. There is no automatic retry. The request uses an in-memory Bearer token for the
+  mock `exports:read` permission; tokens are not written to reports or audit logs.
 - Received bytes feed the existing intake pipeline, which preserves raw and
   derived evidence and reconstructable study bundles. The retained source hash
   must match the transport hash. The original fixture is unchanged.
@@ -40,10 +41,13 @@ These are repository examples, not installed runtime CLI commands.
 
 The local audit records request method, path and status; it is not a durable,
 authenticated enterprise audit log. Revision and hash agreement establish supplied
-byte consistency, not source authenticity. Loopback HTTP intentionally has no TLS,
-credentials, identities, permission model, secret storage or token renewal.
+byte consistency, not source authenticity. The server denies missing/invalid credentials with 401 and a known mock credential
+without read scope with 403. Duplicate authorization headers are rejected. Its
+ephemeral token represents a toy read permission, not an organizational identity.
+Loopback HTTP has no TLS, real identity provider, durable secret store, token
+renewal, role administration or enterprise authorization review.
 
-The mock source has no write behavior. Method-rejection tests demonstrate this
+The mock source has no write behavior. Credential, scope and method-rejection tests demonstrate this
 fixture's contract; they do not prove real ERP/MES permissions. The client does
 not accept arbitrary URLs or forward authorization headers. HTTP errors fail
 explicitly for review rather than concealing them with fabricated data.
