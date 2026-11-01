@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "package_id": "synthetic-cnc",
+  "revision": "4",
+  "product_id": "demo-bracket",
+  "design_revision": "A",
+  "bom": [
+    {
+      "item_id": "blank",
+      "revision": "A",
+      "quantity": {
+        "value": 1,
+        "unit": "piece"
+      }
+    }
+  ],
+  "requirements": [
+    {
+      "requirement_id": "R1",
+      "description": "Synthetic bracket; drawing review required"
+    }
+  ],
+  "demand": {
+    "value": 72,
+    "unit": "piece"
+  },
+  "facility": {
+    "facility_id": "synthetic-shop",
+    "revision": "1"
+  },
+  "constraints": [
+    {
+      "constraint_id": "machine-envelope",
+      "kind": "hard",
+      "satisfied": null,
+      "issue": "Machine capability evidence is unavailable"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "E1",
+      "source_uri": "synthetic://drawing",
+      "source_owner": "demo-engineering",
+      "revision": "A",
+      "captured_at": "2026-10-15T00:00:00Z",
+      "evidence_type": "synthetic-drawing",
+      "claim_ids": [
+        "R1"
+      ],
+      "content_hash": "be77eb6b6998f588b58c30ba79dbb2e33482bac0e40daf6fc7da58b2dca3d880"
+    }
+  ]
+}

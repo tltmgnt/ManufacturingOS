@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "snapshot_id": "synthetic-drawing-capture",
+  "revision": "1",
+  "files": [
+    {
+      "evidence_id": "E1",
+      "path": "drawing.txt"
+    }
+  ]
+}

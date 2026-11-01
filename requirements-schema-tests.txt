@@ -1,0 +1,2 @@
+# Development-only independent JSON Schema validation; not a runtime dependency.
+jsonschema>=4.18,<5

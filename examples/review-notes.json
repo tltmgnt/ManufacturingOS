@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "review_id": "synthetic-cnc-study/review-notes",
+  "revision": 1,
+  "study_fingerprint": "d9f83d3189582982ccb7cae9bc4a870bb18d22511ef2c267d766de37cf5a5a32",
+  "report_content_hash": "0eeb923471f58661a65830b1d732594947c9ca718ecfa6d91c774fa623a1298b",
+  "entries": [
+    {
+      "note_id": "synthetic-note-1",
+      "reviewer": "Synthetic quality reviewer",
+      "role": "quality",
+      "timestamp": "2026-11-01T00:00:00Z",
+      "disposition": "COMMENT",
+      "comment": "Review synthetic calibration assumptions before formal review.",
+      "finding_code": "UNVALIDATED_MODELS"
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+name: prototype-tests
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m unittest discover -s tests -v
+      - run: python -m manufacturing_os examples/synthetic-cnc.json
+      - run: python -m manufacturing_os.calculations examples/serial-route.json --variants examples/serial-route-variants.json
+      - run: python -m manufacturing_os.experiments validate examples/arithmetic-references.json
+      - run: python -m manufacturing_os.experiments simulate examples/uncertainty-experiment.json
+      - run: python -m manufacturing_os.simulation examples/finite-batch.json
+      - run: python -m manufacturing_os.study examples/integrated-study.json
+      - run: python -m manufacturing_os.study examples/integrated-study.json --output ci-study-report.json
+      - run: python -m manufacturing_os.review ci-study-report.json --output ci-study-review.html
+      - run: python -m manufacturing_os.study examples/integrated-study-revised.json --output ci-study-revised.json
+      - run: python -m manufacturing_os.compare ci-study-report.json ci-study-revised.json --output ci-study-comparison.json
+      - run: python -m manufacturing_os.bundle create examples/integrated-study-revised.json --before ci-study-report.json --output ci-study-bundle.zip
+      - run: python -m manufacturing_os.bundle verify ci-study-bundle.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-study-review-python-${{ matrix.python-version }}
+          path: ci-study-bundle.zip
+          if-no-files-found: error
+      - run: python -m pip wheel --no-deps --wheel-dir dist .
+      - run: python tests/smoke_installed.py dist/*.whl
+      - uses: actions/upload-artifact@v4
+        with:
+          name: manufacturingos-wheel-python-${{ matrix.python-version }}
+          path: dist/*.whl
+          if-no-files-found: error
+      - run: python -m manufacturing_os.cli evidence examples/evidence-input.json examples/evidence-policy.json
+      - run: python -m manufacturing_os.cli bundle create examples/evidence-study.json --output ci-evidence-bundle.zip
+      - run: python -m manufacturing_os.cli bundle verify ci-evidence-bundle.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-evidence-review-python-${{ matrix.python-version }}
+          path: ci-evidence-bundle.zip
+          if-no-files-found: error
+      - run: python -m manufacturing_os.cli sources examples/source-input.json examples/source-snapshot.json
+      - run: python -m manufacturing_os.cli bundle create examples/source-study.json --output ci-source-bundle.zip
+      - run: python -m manufacturing_os.cli bundle verify ci-source-bundle.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-source-review-python-${{ matrix.python-version }}
+          path: ci-source-bundle.zip
+          if-no-files-found: error
+      - run: python -m manufacturing_os.cli capture examples/source-input.json examples/capture-manifest.json --root examples/source-files --output ci-captured-source.json
+      - run: python -m manufacturing_os.cli sources examples/source-input.json ci-captured-source.json
+      - run: python -m manufacturing_os.cli study examples/source-study.json --output ci-annotated-study.json
+      - run: python -m manufacturing_os.cli notes check ci-annotated-study.json examples/review-notes.json
+      - run: python -m manufacturing_os.cli bundle create examples/source-study.json --notes examples/review-notes.json --output ci-annotated-bundle.zip
+      - run: python -m manufacturing_os.cli bundle verify ci-annotated-bundle.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-annotated-review-python-${{ matrix.python-version }}
+          path: ci-annotated-bundle.zip
+          if-no-files-found: error
+      - run: python -m manufacturing_os.cli simulate examples/finite-batch-downtime.json
+      - run: python -m manufacturing_os.cli bundle create examples/downtime-study.json --output ci-downtime-bundle.zip
+      - run: python -m manufacturing_os.cli bundle verify ci-downtime-bundle.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-downtime-review-python-${{ matrix.python-version }}
+          path: ci-downtime-bundle.zip
+          if-no-files-found: error
+      - run: python -m manufacturing_os.cli simulate examples/finite-batch-costs.json
+      - run: python -m manufacturing_os.cli bundle create examples/cost-study.json --output ci-cost-bundle.zip
+      - run: python -m manufacturing_os.cli bundle verify ci-cost-bundle.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-cost-review-python-${{ matrix.python-version }}
+          path: ci-cost-bundle.zip
+          if-no-files-found: error
+      - run: python -m manufacturing_os.cli replicate examples/replication-experiment.json
+      - run: python -m manufacturing_os.cli replicate examples/replication-experiment.json --replay 0
+      - run: python -m manufacturing_os.cli bundle create examples/replication-study.json --output ci-replicated-bundle.zip
+      - run: python -m manufacturing_os.cli bundle verify ci-replicated-bundle.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-replicated-review-python-${{ matrix.python-version }}
+          path: ci-replicated-bundle.zip
+          if-no-files-found: error
+      - run: python -m manufacturing_os.cli study examples/observation-study.json --output ci-observation-study.json
+      - run: python -m manufacturing_os.cli observations ci-observation-study.json
+      - run: python -m manufacturing_os.cli bundle create examples/observation-study.json --output ci-observation-bundle.zip
+      - run: python -m manufacturing_os.cli bundle verify ci-observation-bundle.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-observation-review-python-${{ matrix.python-version }}
+          path: ci-observation-bundle.zip
+          if-no-files-found: error
+      - run: python -m manufacturing_os.cli campaign examples/scenario-campaign.json --output ci-campaign-report.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-scenario-campaign-python-${{ matrix.python-version }}
+          path: ci-campaign-report.json
+          if-no-files-found: error
+      - run: python -m manufacturing_os.cli campaign-bundle create examples/scenario-campaign.json --output ci-campaign-review.zip
+      - run: python -m manufacturing_os.cli campaign-bundle verify ci-campaign-review.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-campaign-review-python-${{ matrix.python-version }}
+          path: ci-campaign-review.zip
+          if-no-files-found: error
+      - run: python -m pip install -r requirements-schema-tests.txt
+      - run: python tests/check_exported_schemas.py
+      - run: python -m manufacturing_os.cli schema export input --output ci-manufacturing-input.schema.json
+      - run: python -m manufacturing_os.cli schema export scenario --output ci-scenario.schema.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: core-json-schemas-python-${{ matrix.python-version }}
+          path: ci-*.schema.json
+          if-no-files-found: error
+      - run: python -m manufacturing_os.cli schema validate study examples/observation-study.json

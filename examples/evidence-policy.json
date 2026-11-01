@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "policy_id": "synthetic-review-policy",
+  "revision": "1",
+  "as_of": "2026-11-01T00:00:00Z",
+  "max_age": {
+    "value": 30,
+    "unit": "day"
+  },
+  "require_declared_sha256": false,
+  "sources": [
+    {
+      "source_uri": "synthetic://drawing",
+      "source_owner": "demo-engineering",
+      "revision": "A",
+      "evidence_type": "synthetic-drawing"
+    }
+  ]
+}
