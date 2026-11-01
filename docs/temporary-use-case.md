@@ -50,6 +50,11 @@ Three cases are generated:
   SIMULATED_TARGET_MISS with REVISION_REQUIRED. Eventual completion at hour 7
   does not satisfy the earlier deadline.
 
+Open `runs/temporary-bracket-demo/index.html` for an offline comparison of all
+three cases, target counts, cost residuals and review states. The page links to
+each case review, JSON report and ZIP bundle. Keep the directory tree together
+when copying or downloading the results.
+
 Each case contains its input, preflight, full report, observation checks, offline
 HTML review, portable ZIP review and bundle verification. `summary.json` records
 all three outcomes and explicitly marks empirical calibration incomplete. Open

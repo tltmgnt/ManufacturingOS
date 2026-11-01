@@ -6,6 +6,7 @@ import argparse
 import base64
 from copy import deepcopy
 import hashlib
+from html import escape
 import json
 from pathlib import Path
 
@@ -17,6 +18,57 @@ from manufacturing_os.study import binding, preflight_study, run_study
 
 def encode(value):
     return (json.dumps(value, indent=2, sort_keys=True, allow_nan=False) + "\n").encode()
+
+
+def render_summary(summary):
+    """Offline landing page; case paths are fixed by the runner, values escaped."""
+    paths = {"baseline": "baseline", "cost-disagreement": "cost-disagreement",
+             "target-miss": "target-miss"}
+    rows = []
+    for case in summary["cases"]:
+        path = paths[case["case"]]
+        cost = case["cost_comparison"]
+        values = [case["case"], case["observation_status"],
+                  f'{case["good_by_horizon"]} / {case["target_good_units"]}',
+                  "Met" if case["target_met"] else "MISSED",
+                  f'{cost["model_mean"]["value"]:g} / {cost["observed"]["value"]:g}',
+                  f'{cost["residual"]["value"]:+g}', case["review_state"]]
+        cells = "".join("<td>" + escape(str(value)) + "</td>" for value in values)
+        rows.append("<tr>" + cells + f'<td><a href="{path}/study-review.html">Review</a> · '
+                    f'<a href="{path}/study-report.json">JSON</a> · '
+                    f'<a href="{path}/study-review.zip">Bundle</a></td></tr>')
+    return """<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Synthetic bracket demo — case comparison</title>
+<style>
+body {font-family:system-ui,sans-serif;max-width:1200px;margin:2rem auto;padding:0 1rem;color:#16263a;background:#f6f8fb;line-height:1.5}
+h1 {line-height:1.2} .notice {background:#fff0c2;border-left:5px solid #946200;padding:1rem}
+.scroll {overflow-x:auto} table {border-collapse:collapse;width:100%;background:white}
+th,td {padding:.8rem;text-align:left;border-bottom:1px solid #ccd4df;vertical-align:top}
+th {background:#e6edf5} a {color:#124e96} a:focus {outline:3px solid #946200}
+caption {text-align:left;font-weight:600;margin:1rem 0} small {color:#374c65}
+</style></head><body>
+<h1>Synthetic bracket demo</h1>
+<p class="notice"><strong>Synthetic data only.</strong> Empirical calibration is incomplete.
+Production authorization is false for every case. Software agreement does not approve a production plan.</p>
+<p>Three brackets pass through cutting and finishing. Compare reference agreement,
+cost disagreement, and a production shortfall at the five-hour deadline.</p>
+<div class="scroll"><table><caption>Case outcomes · costs and residuals in USD</caption>
+<thead><tr><th scope="col">Case</th><th scope="col">Reference</th><th scope="col">Good / target at 5 h</th>
+<th scope="col">Target</th><th scope="col">Model / reference cost</th><th scope="col">Cost residual</th>
+<th scope="col">Review state</th><th scope="col">Files</th></tr></thead><tbody>
+""" + "\n".join(rows) + """
+</tbody></table></div>
+<h2>Interpret the outcomes</h2>
+<ul><li>Baseline: agreement still requires human review.</li>
+<li>Cost disagreement: the deliberately declared 220 USD reference differs from the 225 USD model by +5 USD.</li>
+<li>Target miss: reference agreement coexists with a shortfall; only two of three requested brackets finish by hour five.</li></ul>
+<p>Each bundle has been checked for content consistency and reconstruction. This does not establish source authenticity or approval.</p>
+<p><a href="summary.json">Machine-readable summary</a> · <a href="README.txt">Run notes</a></p>
+<small>Offline review. Keep this page with its case directories so relative links work.</small>
+</body></html>
+"""
 
 
 def bind_synthetic_reference(spec, reference):
@@ -86,11 +138,13 @@ def run_demo(output: Path) -> dict:
                                  "target_met": simulation["target_met"],
                                  "cost_comparison": cost, "bundle_status": verification["status"]})
     (output / "summary.json").write_bytes(encode(summary))
+    (output / "index.html").write_text(render_summary(summary), encoding="utf-8")
     (output / "README.txt").write_text(
         "SYNTHETIC WORKFLOW DEMO — not facility data or empirical calibration.\n"
         "baseline: reference agreement; human review remains required.\n"
         "cost-disagreement: deliberately changed synthetic reference; expected FAIL, residual +5 USD.\n"
         "target-miss: reference PASS but only 2 of 3 requested brackets by hour 5; revision required.\n"
+        "Open index.html to compare all cases and follow links to their reviews.\n"
         "Each case contains an offline study-review.html and verified study-review.zip.\n"
         "Production authorization remains false in all cases.\n", encoding="utf-8")
     return summary
