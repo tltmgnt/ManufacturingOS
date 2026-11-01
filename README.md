@@ -30,6 +30,13 @@ processing, shorter deadlines, small batches and seeded zero-good-output cases:
 python -m examples.offline_edge_cases --output runs/offline-edge-cases
 ```
 
+A [bounded offline invariant sweep](docs/offline-invariant-sweep.md) checks
+conservation, cost reconciliation, replay and reporting-horizon consistency:
+
+```sh
+python -m examples.offline_invariant_sweep --output runs/invariant-sweep
+```
+
 ## Try a temporary use case
 
 A [synthetic bracket demo](docs/temporary-use-case.md) runs reference agreement,
