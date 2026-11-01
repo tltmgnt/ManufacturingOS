@@ -10,6 +10,8 @@ Three major milestones remain before a bounded pilot can be accepted:
 2. **Controlled read-only integration.** Implement selected enterprise connectors, identity/access controls, audit/security testing, and the organization's cybersecurity review.
 3. **Shadow-pilot evaluation and qualified acceptance.** Establish baselines, measure outcomes without controlling equipment, and obtain engineering, quality, cybersecurity, and management review.
 
+Calibration preparation now has a [protocol](docs/calibration-protocol.md) and [intake worksheet](docs/calibration-intake.md). Authorized facility data and qualified acceptance remain required; this documentation does not complete the milestone.
+
 The original phases below retain their scope. Phase 5 is a separate optional expansion, not part of prototype or pilot acceptance.
 
 ## Phase 0 — Reference specification

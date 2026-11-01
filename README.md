@@ -4,6 +4,14 @@
 
 See [release notes](CHANGELOG.md) for the delivered scope and known limits, and [the roadmap](roadmap.md) for the remaining milestones.
 
+## Start the calibration milestone
+
+Use the [first-facility calibration protocol](docs/calibration-protocol.md) and
+[intake worksheet](docs/calibration-intake.md) to prepare authorized real data,
+freeze acceptance criteria, and separate fitting from held-out validation.
+The repository currently contains synthetic references only; empirical calibration
+remains open.
+
 ## Install and use the unified CLI
 
 Python 3.11+ is required. From a source checkout:
