@@ -27,7 +27,7 @@ def main():
             assert page.title() == "ManufacturingOS — synthetic pilot rehearsal"
             assert page.locator("tbody tr").count() == 6
             assert "Software rehearsal only" in page.locator(".notice").inner_text()
-            assert page.locator("a").count() == 14
+            assert page.locator("a").count() == 15
             for href in page.locator("a").evaluate_all("links => links.map(link => link.getAttribute('href'))"):
                 assert (pilot / href).is_file(), f"Missing combined review link: {href}"
             assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")

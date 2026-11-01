@@ -7,6 +7,7 @@ from pathlib import Path
 from manufacturing_os._version import __version__
 from .mock_enterprise_api import run_api_rehearsal
 from .mock_api_failures import run_failures
+from .rehearsal_provenance import SOURCE_ROOT, capture_provenance, verify_source_unchanged
 from .synthetic_calibration_rehearsal import run_rehearsal
 from .synthetic_export_intake import run_intake
 from .temporary_use_case import encode, run_demo
@@ -48,7 +49,7 @@ Production authorization remains false.</p>
 shortfall must remain visible. A candidate matching a tiny synthetic held-out batch
 does not establish generalization. Additional machine capacity is an assumption;
 equipment purchase and added fixed costs are excluded.</p>
-<p><a href="rehearsal-scorecard.json">Machine-readable scorecard</a> · <a href="run-status.json">Run status</a></p>
+<p><a href="source-provenance.json">Source and environment provenance</a> · <a href="rehearsal-scorecard.json">Machine-readable scorecard</a> · <a href="run-status.json">Run status</a></p>
 <p>Keep the whole directory together. Individual study bundles do not include every
 fitting file; the calibration directory retains the full fitting/held-out record.</p>
 </body></html>
@@ -56,13 +57,20 @@ fitting file; the calibration directory retains the full fitting/held-out record
 
 
 def run_pilot(output: Path) -> dict:
+    for directory in (SOURCE_ROOT / "examples", SOURCE_ROOT / "manufacturing_os"):
+        if output.resolve().is_relative_to(directory.resolve()):
+            raise ValueError("Rehearsal output must be outside the captured source directories")
     output.mkdir(parents=True, exist_ok=False)
-    phase = "planning"
+    phase = "source-provenance"
     status = {"scope": "SYNTHETIC_PILOT_REHEARSAL", "status": "RUNNING", "phase": phase,
               "production_authorized": False, "empirical_calibration_complete": False}
     status_path = output / "run-status.json"
     status_path.write_bytes(encode(status))
     try:
+        provenance = capture_provenance()
+        (output / "source-provenance.json").write_bytes(encode(provenance))
+        phase = "planning"
+        status_path.write_bytes(encode({**status, "phase": phase}))
         planning = run_demo(output / "planning")
         phase = "intake"
         status_path.write_bytes(encode({**status, "phase": phase}))
@@ -89,6 +97,9 @@ def run_pilot(output: Path) -> dict:
             raise RuntimeError("Held-out comparison did not retain expected baseline/candidate outcomes")
         summary = {"scope": "SYNTHETIC_PILOT_REHEARSAL", "software_version": __version__,
                    "status": "SOFTWARE_REHEARSAL_PASSED", "production_authorized": False,
+                   "source_fingerprint": provenance["source_fingerprint"],
+                   "git_commit": provenance["git_commit"],
+                   "captured_source_roots_dirty": provenance["captured_source_roots_dirty"],
                    "empirical_calibration_complete": False, "actual_shadow_pilot_complete": False,
                    "live_integration_complete": False,
                    "software_checks": [{"check": name, "result": "PASS"} for name in
@@ -102,6 +113,8 @@ def run_pilot(output: Path) -> dict:
         if any(result["production_authorized"] or result["empirical_calibration_complete"]
                for result in (planning, intake, api, api_failures, calibration)):
             raise RuntimeError("A synthetic component incorrectly claimed real-world acceptance")
+        phase = "source-verification"
+        verify_source_unchanged(provenance)
         phase = "summary"
         (output / "rehearsal-scorecard.json").write_bytes(encode(summary))
         (output / "index.html").write_text(render_index(summary), encoding="utf-8")
@@ -121,7 +134,7 @@ def main():
         summary = run_pilot(args.output)
     except Exception as exc:
         parser.exit(2, f"Synthetic pilot rehearsal error: {exc}\n")
-    print(json.dumps({key: summary[key] for key in ("scope", "status", "software_version", "production_authorized",
+    print(json.dumps({key: summary[key] for key in ("scope", "status", "software_version", "source_fingerprint", "production_authorized",
                      "empirical_calibration_complete", "live_integration_complete", "actual_shadow_pilot_complete")}, indent=2))
     print(f"Open {args.output / 'index.html'} for the consolidated review.")
 
