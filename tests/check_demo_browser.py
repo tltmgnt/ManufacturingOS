@@ -25,9 +25,9 @@ def main():
             page.set_viewport_size({"width": width, "height": 900})
             page.goto((pilot / "index.html").as_uri(), wait_until="load")
             assert page.title() == "ManufacturingOS — synthetic pilot rehearsal"
-            assert page.locator("tbody tr").count() == 4
+            assert page.locator("tbody tr").count() == 5
             assert "Software rehearsal only" in page.locator(".notice").inner_text()
-            assert page.locator("a").count() == 9
+            assert page.locator("a").count() == 12
             for href in page.locator("a").evaluate_all("links => links.map(link => link.getAttribute('href'))"):
                 assert (pilot / href).is_file(), f"Missing combined review link: {href}"
             assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")

@@ -30,7 +30,7 @@ class TemporaryPilotTests(unittest.TestCase):
             self.assertEqual(json.loads((output / "run-status.json").read_text())["status"], "COMPLETE")
             parser = Links()
             parser.feed((output / "index.html").read_text())
-            self.assertEqual(len(parser.links), 9)
+            self.assertEqual(len(parser.links), 12)
             self.assertTrue(all((output / path).is_file() for path in parser.links))
             self.assertTrue((output / "calibration/fitting-records.csv").is_file())
             self.assertTrue((output / "calibration/frozen-candidate.json").is_file())

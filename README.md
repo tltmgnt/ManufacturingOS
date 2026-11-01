@@ -11,7 +11,7 @@ python -m examples.temporary_pilot --output runs/temporary-pilot
 ```
 
 Open `runs/temporary-pilot/index.html` for planning cases, synthetic CSV intake,
-and separate fitting/held-out results in one review. See the
+a local read-only mock API, and separate fitting/held-out results in one review. See the
 [rehearsal guide](docs/temporary-pilot-rehearsal.md). This uses synthetic local
 fixtures only; real calibration, enterprise integration and shadow-pilot
 acceptance remain open.
@@ -43,6 +43,13 @@ validation residuals:
 
 ```sh
 python -m examples.synthetic_calibration_rehearsal --output runs/calibration-rehearsal
+```
+
+A [local mock ERP/MES API](docs/mock-enterprise-api.md) rehearses a read-only
+HTTP export handoff without connecting to an external system:
+
+```sh
+python -m examples.mock_enterprise_api --output runs/mock-api
 ```
 
 ## Start the calibration milestone
