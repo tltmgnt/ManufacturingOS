@@ -54,3 +54,20 @@ For target good quantity `D`, operation cycle time `t_i`, setup time `s_i`, mach
 The hand-calculated synthetic reference uses 72 good units, 90% cut yield and 80% finish yield. It requires 100 entry starts and 90 finishing inputs. Material costs $500, cutting $165, and finishing $150: total $815 and unit cost $815/72. Finishing limits expected capacity to 76.8 good units per horizon. Tests also cover a doubled-demand ramp, yield degradation, multiple machines, setup overload, equivalent time units, invalid inputs, and reproducibility.
 
 This is steady-state capacity arithmetic, not a schedule or discrete-event simulation. It excludes pipeline fill/drain, rework, queues, transfer times, shared resources, supplier disruptions, inventory, taxes, and overhead. The synthetic reference checks arithmetic only. Calibration against authorized facility datasets, empirical uncertainty bounds, and validated operational models remain outstanding Phase 2 work.
+
+## Phase 2: exploratory simulation and reference reports
+
+```sh
+python -m manufacturing_os.experiments simulate examples/uncertainty-experiment.json
+python -m manufacturing_os.experiments validate examples/arithmetic-references.json
+# Optional: save a complete report to a new file (parent directory must exist).
+python -m manufacturing_os.experiments validate examples/arithmetic-references.json --output reference-report.json
+```
+
+The simulation samples independent uniform ranges for operation cycle/setup times, availability, yield, and machine/labor rates. Range values use the baseline field's declared unit. All unsampled fields stay fixed. Every endpoint is validated before sampling. One to 10,000 samples and an explicit 32-bit nonnegative integer seed are required. A local Python random generator avoids changing global RNG state; supported runtimes use a sorted parameter order. The report records exact inputs, sampled parameter values, per-sample fingerprints and metrics, bottleneck counts, feasible-sample counts/fraction, and min/mean/p05/p50/p95/max summaries. Quantiles use linear interpolation at `(n-1)*p`. Re-running the same input reproduces the report; sample values are retained for inspection.
+
+These are exploratory sampled outcomes under assumed ranges, not calibrated risk probabilities or confidence intervals. Uniformity and independence need empirical justification before any operational use. This remains steady-state uncertainty propagation, not discrete-event simulation. Reports retain the baseline assumptions and `production_authorized: false`.
+
+The reference validator compares numeric model outputs against explicitly versioned expected values with matching units and nonnegative absolute tolerances. It emits per-check residuals and PASS/FAIL, check counts, case objectives, source references, software/model versions, input fingerprints, and the full reference suite for reconstruction. Reviewer remains `null` until a separate human review occurs. Exit codes are `0` for completed simulation or passing references, `1` for failed reference checks, and `2` for malformed input or I/O errors. `--output` exclusively creates a new report and rejects an existing path.
+
+The supplied suite contains two independently hand-calculated synthetic cases and 12 numeric checks: the $815 baseline and a finish-yield reduction to 50% ($1,295 total cost, 160 entry starts, 48 expected good units of capacity per horizon). Passing this suite establishes arithmetic agreement only. It does not calibrate or validate the model against real manufacturing data. Authorized facility reference datasets and empirical uncertainty calibration remain outstanding.

@@ -1,0 +1,214 @@
+{
+  "schema_version": "1.0",
+  "suite_id": "serial-arithmetic",
+  "revision": "1",
+  "reference_type": "synthetic_arithmetic",
+  "cases": [
+    {
+      "case_id": "serial-baseline",
+      "objective": "Check independently hand-calculated starts, cost, yield, and capacity",
+      "reference_revision": "1",
+      "source_reference": "synthetic://hand-calculated-serial-route-v1",
+      "scenario": {
+        "schema_version": "1.0",
+        "scenario_id": "synthetic-serial-route",
+        "revision": "1",
+        "currency": "USD",
+        "target_good_units": 72,
+        "horizon": {
+          "value": 8,
+          "unit": "h"
+        },
+        "material_cost_per_start": {
+          "value": 5,
+          "unit": "USD/piece"
+        },
+        "source_reference": "synthetic://hand-calculated-serial-route-v1",
+        "assumptions": [
+          "Synthetic arithmetic reference only; no facility calibration."
+        ],
+        "operations": [
+          {
+            "operation_id": "cut",
+            "cycle_time": {
+              "value": 3,
+              "unit": "min"
+            },
+            "setup_time": {
+              "value": 30,
+              "unit": "min"
+            },
+            "machines": 1,
+            "availability": 1,
+            "yield_fraction": 0.9,
+            "machine_rate": {
+              "value": 20,
+              "unit": "USD/h"
+            },
+            "labor_rate": {
+              "value": 10,
+              "unit": "USD/h"
+            }
+          },
+          {
+            "operation_id": "finish",
+            "cycle_time": {
+              "value": 5,
+              "unit": "min"
+            },
+            "setup_time": {
+              "value": 0,
+              "unit": "h"
+            },
+            "machines": 1,
+            "availability": 1,
+            "yield_fraction": 0.8,
+            "machine_rate": {
+              "value": 15,
+              "unit": "USD/h"
+            },
+            "labor_rate": {
+              "value": 5,
+              "unit": "USD/h"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "expected_starts": {
+          "value": 100,
+          "unit": "piece",
+          "absolute_tolerance": 1e-09
+        },
+        "expected_scrap": {
+          "value": 28,
+          "unit": "piece",
+          "absolute_tolerance": 1e-09
+        },
+        "route_yield": {
+          "value": 0.72,
+          "unit": "fraction",
+          "absolute_tolerance": 1e-09
+        },
+        "total_cost": {
+          "value": 815,
+          "unit": "USD",
+          "absolute_tolerance": 1e-09
+        },
+        "unit_cost": {
+          "value": 11.319444444444445,
+          "unit": "USD/good_piece",
+          "absolute_tolerance": 1e-09
+        },
+        "expected_good_capacity": {
+          "value": 76.8,
+          "unit": "piece/horizon",
+          "absolute_tolerance": 1e-09
+        }
+      }
+    },
+    {
+      "case_id": "yield-degradation",
+      "objective": "Check downstream yield degradation arithmetic",
+      "reference_revision": "1",
+      "source_reference": "synthetic://hand-calculated-serial-route-v1",
+      "scenario": {
+        "schema_version": "1.0",
+        "scenario_id": "synthetic-serial-route",
+        "revision": "2",
+        "currency": "USD",
+        "target_good_units": 72,
+        "horizon": {
+          "value": 8,
+          "unit": "h"
+        },
+        "material_cost_per_start": {
+          "value": 5,
+          "unit": "USD/piece"
+        },
+        "source_reference": "synthetic://hand-calculated-serial-route-v1",
+        "assumptions": [
+          "Synthetic arithmetic reference only; no facility calibration."
+        ],
+        "operations": [
+          {
+            "operation_id": "cut",
+            "cycle_time": {
+              "value": 3,
+              "unit": "min"
+            },
+            "setup_time": {
+              "value": 30,
+              "unit": "min"
+            },
+            "machines": 1,
+            "availability": 1,
+            "yield_fraction": 0.9,
+            "machine_rate": {
+              "value": 20,
+              "unit": "USD/h"
+            },
+            "labor_rate": {
+              "value": 10,
+              "unit": "USD/h"
+            }
+          },
+          {
+            "operation_id": "finish",
+            "cycle_time": {
+              "value": 5,
+              "unit": "min"
+            },
+            "setup_time": {
+              "value": 0,
+              "unit": "h"
+            },
+            "machines": 1,
+            "availability": 1,
+            "yield_fraction": 0.5,
+            "machine_rate": {
+              "value": 15,
+              "unit": "USD/h"
+            },
+            "labor_rate": {
+              "value": 5,
+              "unit": "USD/h"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "expected_starts": {
+          "value": 160,
+          "unit": "piece",
+          "absolute_tolerance": 1e-09
+        },
+        "expected_scrap": {
+          "value": 88,
+          "unit": "piece",
+          "absolute_tolerance": 1e-09
+        },
+        "route_yield": {
+          "value": 0.45,
+          "unit": "fraction",
+          "absolute_tolerance": 1e-09
+        },
+        "total_cost": {
+          "value": 1295,
+          "unit": "USD",
+          "absolute_tolerance": 1e-09
+        },
+        "unit_cost": {
+          "value": 17.98611111111111,
+          "unit": "USD/good_piece",
+          "absolute_tolerance": 1e-09
+        },
+        "expected_good_capacity": {
+          "value": 48,
+          "unit": "piece/horizon",
+          "absolute_tolerance": 1e-09
+        }
+      }
+    }
+  ]
+}
