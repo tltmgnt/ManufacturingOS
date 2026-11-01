@@ -7,7 +7,8 @@ See [release notes](CHANGELOG.md) for the delivered scope and known limits, and 
 ## Try a temporary use case
 
 A [synthetic bracket demo](docs/temporary-use-case.md) runs reference agreement,
-a deliberate cost disagreement, and a missed production target, exporting offline
+a deliberate cost disagreement, a missed production target, and an assumed
+capacity remedy, exporting offline
 reviews and verified bundles:
 
 ```sh

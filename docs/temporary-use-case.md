@@ -35,7 +35,7 @@ those outputs are model demonstrations rather than empirical estimates.
 The full cost is 15 USD material + 90 USD cutting + 120 USD finishing.
 It includes processing after the 5-hour horizon.
 
-Three cases are generated:
+Four cases are generated:
 
 - **baseline:** the model agrees with the synthetic reference; the report still
   requires human review and grants no production authorization.
@@ -50,8 +50,17 @@ Three cases are generated:
   SIMULATED_TARGET_MISS with REVISION_REQUIRED. Eventual completion at hour 7
   does not satisfy the earlier deadline.
 
+- **capacity-remedy:** keep the three-bracket target and add a second identical
+  finishing machine. Cutting completes at hours 1, 2 and 3; two finishing machines
+  complete the brackets at hours 3, 4 and 5. The reference checks PASS and the
+  model meets the target, but human review remains required. Processing costs
+  remain 225 USD because total busy hours are unchanged. This excludes equipment
+  purchase, installation and added fixed costs; staffing and actual machine
+  availability are unverified. It is a synthetic alternative, not a purchase
+  recommendation or production approval.
+
 Open `runs/temporary-bracket-demo/index.html` for an offline comparison of all
-three cases, target counts, cost residuals and review states. The page links to
+four cases, target counts, cost residuals and review states. The page links to
 each case review, JSON report and ZIP bundle. Keep the directory tree together
 when copying or downloading the results. Narrow screens show labeled case cards
 so target outcomes, review states and file links remain in view without horizontal
@@ -59,7 +68,7 @@ scrolling.
 
 Each case contains its input, preflight, full report, observation checks, offline
 HTML review, portable ZIP review and bundle verification. `summary.json` records
-all three outcomes and explicitly marks empirical calibration incomplete. Open
+all four outcomes and explicitly marks empirical calibration incomplete. Open
 `baseline/study-review.html` and `cost-disagreement/study-review.html` to compare
 agreement with a visible disagreement. Verification checks reconstructability,
 not authenticity or approval.
@@ -72,7 +81,7 @@ synthetic case as a regression example rather than relabeling it as measured dat
 
 ## Continuous integration
 
-The Python 3.11–3.13 CI matrix executes all three cases. A successful job means the
+The Python 3.11–3.13 CI matrix executes all four cases. A successful job means the
 baseline agrees and the deliberately wrong reference is detected; it does not
 mean every observation report passes or every production target is met. The
 target-miss case must retain its shortfall finding despite reference agreement. Any unexpected observation status, loss of
@@ -91,8 +100,8 @@ Chromium. It loads the offline comparison at widths 375, 768 and 1440, checks
 case outcomes and viewport overflow, checks local links, and follows each case's
 review link in Chromium. External HTTP/HTTPS requests are blocked.
 
-The `synthetic-demo-browser-review` artifact includes six screenshots (three
-comparison widths and three full case reviews) plus the generated demo files.
+The `synthetic-demo-browser-review` artifact includes seven screenshots (three
+comparison widths and four full case reviews) plus the generated demo files.
 Automated browser checks do not replace human visual review of those screenshots.
 Failures retain available files for diagnosis.
 

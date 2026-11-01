@@ -24,7 +24,7 @@ def main():
             page.set_viewport_size({"width": width, "height": 900})
             page.goto((root / "index.html").as_uri(), wait_until="load")
             assert page.title() == "Synthetic bracket demo — case comparison"
-            assert page.locator("tbody tr").count() == 3
+            assert page.locator("tbody tr").count() == 4
             assert page.locator(".notice").is_visible()
             rows = page.locator("tbody tr")
             assert "HUMAN_REVIEW" in rows.nth(0).inner_text()
@@ -33,6 +33,9 @@ def main():
             assert "2 / 3" in rows.nth(2).inner_text()
             assert "MISSED" in rows.nth(2).inner_text()
             assert "REVISION_REQUIRED" in rows.nth(2).inner_text()
+            assert "3 / 3" in rows.nth(3).inner_text()
+            assert "HUMAN_REVIEW" in rows.nth(3).inner_text()
+            assert "MISSED" not in rows.nth(3).inner_text()
             assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), "Page overflows viewport"
             for href in page.locator("a").evaluate_all("links => links.map(link => link.getAttribute('href'))"):
                 assert (root / href).is_file(), f"Missing local link: {href}"
@@ -44,7 +47,7 @@ def main():
             page.evaluate("window.scrollTo(0, 0)")
             page.screenshot(path=str(screenshots / f"comparison-{width}.png"), full_page=True)
         page.set_viewport_size({"width": 1440, "height": 900})
-        for case in ("baseline", "cost-disagreement", "target-miss"):
+        for case in ("baseline", "cost-disagreement", "target-miss", "capacity-remedy"):
             page.goto((root / "index.html").as_uri(), wait_until="load")
             page.locator(f'a[href="{case}/study-review.html"]').click()
             page.wait_for_url((root / case / "study-review.html").as_uri())
@@ -52,7 +55,7 @@ def main():
             page.screenshot(path=str(screenshots / f"{case}-review.png"), full_page=True)
         assert not errors, errors
         browser.close()
-    print("Chromium: 3 viewport checks, 11 local links, 3 review navigations; 6 screenshots saved.")
+    print("Chromium: 3 viewport checks, 14 local links, 4 review navigations; 7 screenshots saved.")
     print("Automated browser checks passed; screenshots still require human visual review.")
 
 
