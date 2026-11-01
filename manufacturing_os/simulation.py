@@ -6,6 +6,7 @@ import math
 from pathlib import Path
 import random
 
+from .jsonio import read_json
 from .calculations import Scenario, fields, hours, nonempty, quantity
 from .models import digest
 
@@ -245,7 +246,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", type=Path, help="Create a new report without overwriting")
     args = parser.parse_args(argv)
     try:
-        result = simulate_batch(json.loads(args.input.read_text(encoding="utf-8")))
+        result = simulate_batch(read_json(args.input))
         encoded = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
         if args.output:
             with args.output.open("x", encoding="utf-8") as file:

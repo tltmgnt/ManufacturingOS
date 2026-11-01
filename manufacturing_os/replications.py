@@ -4,6 +4,7 @@ import json
 import math
 from pathlib import Path
 
+from .jsonio import read_json
 from .calculations import Scenario,fields,nonempty,quantity
 from .experiments import percentile
 from .models import digest
@@ -105,7 +106,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output",type=Path,help="Create a new report without overwriting")
     args = parser.parse_args(argv)
     try:
-        spec = json.loads(args.input.read_text(encoding="utf-8"))
+        spec = read_json(args.input)
         report = replay_replication(spec,args.replay) if args.replay is not None else run_replications(spec)
         encoded = json.dumps(report,indent=2,sort_keys=True,allow_nan=False)+"\n"
         if args.output:

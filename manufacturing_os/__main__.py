@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import sys
 
+from .jsonio import read_json
 from . import ManufacturingInput, Orchestrator
 from .store import save_run
 
@@ -13,7 +14,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-dir", type=Path, default=Path("runs"))
     args = parser.parse_args(argv)
     try:
-        package = ManufacturingInput.from_dict(json.loads(args.input.read_text(encoding="utf-8")))
+        package = ManufacturingInput.from_dict(read_json(args.input))
         plan = Orchestrator().run(package)
         path = save_run(args.output_dir, package, plan)
     except (ValueError, TypeError, KeyError, OSError) as exc:

@@ -6,6 +6,7 @@ from pathlib import Path
 import random
 from typing import Any
 
+from .jsonio import read_json
 from .calculations import MODEL_VERSION, Scenario, estimate, fields, nonempty, number, quantity
 from .models import digest
 
@@ -164,7 +165,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", type=Path, help="Create a new JSON report; existing files are never overwritten")
     args = parser.parse_args(argv)
     try:
-        data = json.loads(args.input.read_text(encoding="utf-8"))
+        data = read_json(args.input)
         result = simulate(data) if args.mode == "simulate" else validate_references(data)
         encoded = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
         if args.output:

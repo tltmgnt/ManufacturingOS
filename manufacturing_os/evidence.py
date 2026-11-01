@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import re
 
+from .jsonio import read_json
 from .calculations import fields, measure, nonempty, quantity
 from .models import ManufacturingInput, digest
 
@@ -93,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", type=Path, help="Create a new JSON report without overwriting")
     args = parser.parse_args(argv)
     try:
-        result = assess_evidence(json.loads(args.input.read_text(encoding="utf-8")), json.loads(args.policy.read_text(encoding="utf-8")))
+        result = assess_evidence(read_json(args.input), read_json(args.policy))
         encoded = json.dumps(result, indent=2, sort_keys=True, allow_nan=False)+"\n"
         if args.output:
             with args.output.open("x", encoding="utf-8") as file:

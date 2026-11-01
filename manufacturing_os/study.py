@@ -4,6 +4,7 @@ from dataclasses import asdict
 import json
 from pathlib import Path
 
+from .jsonio import read_json
 from .calculations import Scenario, estimate, fields, nonempty
 from .engine import Orchestrator
 from .evidence import assess_evidence
@@ -183,7 +184,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", type=Path, help="Create a complete report without overwriting an existing file")
     args = parser.parse_args(argv)
     try:
-        report = run_study(json.loads(args.input.read_text(encoding="utf-8")))
+        report = run_study(read_json(args.input))
         encoded = json.dumps(report, indent=2, sort_keys=True, allow_nan=False)+"\n"
         if args.output:
             with args.output.open("x", encoding="utf-8") as file:

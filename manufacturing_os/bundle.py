@@ -7,6 +7,7 @@ import stat
 import zipfile
 import zlib
 
+from .jsonio import loads, read_json, MAX_REPORT_BYTES
 from .compare import compare_studies
 from .review import render_review
 from .notes import assess_notes
@@ -59,7 +60,7 @@ def content_files(spec: dict, previous: dict | None = None, notes: dict | None =
                           for name, data in sorted(files.items())},
                 "approval_state": "PENDING_HUMAN_REVIEW", "production_authorized": False}
     if notes is not None:
-        manifest["notes_state"] = json.loads(files["review-notes-assessment.json"])["state"]
+        manifest["notes_state"] = loads(files["review-notes-assessment.json"])["state"]
     files["manifest.json"] = encode(manifest)
     if sum(len(data) for data in files.values()) > MAX_CONTENT_BYTES:
         raise ValueError("bundle contents exceed 128 MiB")
@@ -107,9 +108,9 @@ def verify_bundle(data: bytes) -> dict:
         files = {name: archive.read(name) for name in names}
     # Rebuild expected files from the authoritative input; matching checksums
     # alone are insufficient if a report and its manifest were edited together.
-    spec = json.loads(files["study-input.json"])
-    previous = json.loads(files["previous-study-report.json"]) if "previous-study-report.json" in files else None
-    notes = json.loads(files["review-notes.json"]) if "review-notes.json" in files else None
+    spec = loads(files["study-input.json"])
+    previous = loads(files["previous-study-report.json"]) if "previous-study-report.json" in files else None
+    notes = loads(files["review-notes.json"]) if "review-notes.json" in files else None
     expected, report = content_files(spec, previous, notes)
     if set(files) != set(expected):
         raise ValueError("bundle file set differs from reconstruction")
@@ -122,7 +123,7 @@ def verify_bundle(data: bytes) -> dict:
             "approval_state": "PENDING_HUMAN_REVIEW", "production_authorized": False,
             "scope": "Content consistency and reconstruction only; no signature, source validation, or approval."}
     if notes is not None:
-        result["notes_state"] = json.loads(expected["review-notes-assessment.json"])["state"]
+        result["notes_state"] = loads(expected["review-notes-assessment.json"])["state"]
     return result
 
 
@@ -152,15 +153,15 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         if args.command == "create":
-            spec = json.loads(args.input.read_text(encoding="utf-8"))
-            previous = json.loads(args.before.read_text(encoding="utf-8")) if args.before else None
-            notes = json.loads(args.notes.read_text(encoding="utf-8")) if args.notes else None
+            spec = read_json(args.input)
+            previous = read_json(args.before, max_bytes=MAX_REPORT_BYTES) if args.before else None
+            notes = read_json(args.notes, max_bytes=MAX_REPORT_BYTES) if args.notes else None
             data = build_bundle(spec, previous, notes)
             publish(args.output, data)
             # The study state is reported, but does not turn bundle creation into
             # an approval/feasibility gate. Revision-required studies are portable.
             with zipfile.ZipFile(io.BytesIO(data)) as archive:
-                bundle_manifest = json.loads(archive.read("manifest.json"))
+                bundle_manifest = loads(archive.read("manifest.json"))
                 state = bundle_manifest["review_state"]
             result = {"status": "CREATED", "archive": str(args.output), "size_bytes": len(data),
                       "review_state": state, "production_authorized": False}

@@ -8,6 +8,7 @@ import stat
 import zipfile
 import zlib
 
+from .jsonio import loads, read_json
 from .bundle import MAX_ARCHIVE_BYTES,MAX_CONTENT_BYTES,publish
 from .campaign import MAX_CASES,MAX_INPUT_BYTES,encode,run_campaign
 from .campaign_review import render_campaign_review
@@ -94,7 +95,7 @@ def verify_campaign_bundle(data: bytes) -> dict:
             if entry.compress_type not in (zipfile.ZIP_STORED,zipfile.ZIP_DEFLATED):
                 raise ValueError("unsupported campaign bundle compression")
         files = {name:archive.read(name) for name in names}
-    expected,report = content_files(json.loads(files["campaign-input.json"]))
+    expected,report = content_files(loads(files["campaign-input.json"]))
     if set(files)!=set(expected):
         raise ValueError("campaign bundle file set differs from reconstruction")
     for name in sorted(expected):
@@ -122,10 +123,10 @@ def main(argv: list[str] | None = None) -> int:
         if args.command=="create":
             if args.input.stat().st_size>MAX_INPUT_BYTES:
                 raise ValueError("campaign input exceeds 32 MiB")
-            data = build_campaign_bundle(json.loads(args.input.read_text(encoding="utf-8")))
+            data = build_campaign_bundle(read_json(args.input))
             publish(args.output,data)
             with zipfile.ZipFile(io.BytesIO(data)) as archive:
-                manifest = json.loads(archive.read("manifest.json"))
+                manifest = loads(archive.read("manifest.json"))
             result = {"status":"CREATED","archive":str(args.output),"size_bytes":len(data),
                       "campaign_status":manifest["campaign_status"],"revision_required_studies":manifest["revision_required_studies"],
                       "production_authorized":False}

@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .jsonio import read_json, MAX_REPORT_BYTES
 from .models import digest
 from .notes import assess_notes
 from .study import reconstruct_report
@@ -198,8 +199,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--notes", type=Path, help="Optional reviewer notes bound to this exact report")
     args = parser.parse_args(argv)
     try:
-        output = render_review(json.loads(args.report.read_text(encoding="utf-8")),
-                               json.loads(args.notes.read_text(encoding="utf-8")) if args.notes else None)
+        output = render_review(read_json(args.report, max_bytes=MAX_REPORT_BYTES),
+                               read_json(args.notes, max_bytes=MAX_REPORT_BYTES) if args.notes else None)
         with args.output.open("x", encoding="utf-8") as file:
             file.write(output)
     except (ValueError, TypeError, KeyError, OSError, OverflowError, ZeroDivisionError) as exc:

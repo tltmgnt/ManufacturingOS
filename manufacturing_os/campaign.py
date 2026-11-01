@@ -3,6 +3,7 @@ from copy import deepcopy
 import json
 from pathlib import Path
 
+from .jsonio import read_json
 from .calculations import Scenario,fields,nonempty
 from .models import digest
 from .simulation import parse_downtime
@@ -148,7 +149,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.input.stat().st_size > MAX_INPUT_BYTES:
             raise ValueError("campaign input exceeds 32 MiB")
-        result = run_campaign(json.loads(args.input.read_text(encoding="utf-8")))
+        result = run_campaign(read_json(args.input))
         if args.output:
             with args.output.open("xb") as file:
                 file.write(encode(result))

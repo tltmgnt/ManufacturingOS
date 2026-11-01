@@ -4,21 +4,13 @@ from copy import deepcopy
 import json
 from pathlib import Path
 
+from .jsonio import loads, read_json, MAX_REPORT_BYTES
 from .calculations import fields,hours,measure,nonempty,quantity
 from .models import digest
 
 OBSERVATION_VERSION = "captured-reference-checks-1.0"
 METRICS = {"good_by_horizon","scrapped_by_horizon","wip_at_horizon","eventual_good_units",
            "eventual_scrapped_units","batch_completion_time","full_batch_total_cost","full_batch_unit_cost"}
-
-
-def unique_object(pairs: list[tuple[str,object]]) -> dict:
-    result = {}
-    for key,value in pairs:
-        if key in result:
-            raise ValueError("duplicate JSON key in captured observation reference")
-        result[key] = value
-    return result
 
 
 def evaluate_observations(spec: dict,replications: dict,metadata: dict,sources: dict) -> dict:
@@ -45,7 +37,7 @@ def evaluate_observations(spec: dict,replications: dict,metadata: dict,sources: 
         result["issues"] = ["Selected reference must have both eligible metadata and hash-matched captured content."]
         return result
     captured = next(row for row in spec["evidence_snapshot"]["files"] if row["evidence_id"]==evidence_id)
-    reference = json.loads(base64.b64decode(captured["content_base64"],validate=True),object_pairs_hook=unique_object)
+    reference = loads(base64.b64decode(captured["content_base64"],validate=True))
     fields(reference,{"schema_version","reference_kind","observation_count","context","metrics"},"captured observation reference")
     if reference["schema_version"] != "1.0" or reference["reference_kind"] not in ("synthetic","declared_observations"):
         raise ValueError("unsupported observation reference schema/kind")
@@ -116,7 +108,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output",type=Path,help="Create a new check report without overwriting")
     args = parser.parse_args(argv)
     try:
-        report = reconstruct_report(json.loads(args.report.read_text(encoding="utf-8")))
+        report = reconstruct_report(read_json(args.report, max_bytes=MAX_REPORT_BYTES))
         if "observation_report" not in report:
             raise ValueError("study report does not include observation_checks")
         result = report["observation_report"]

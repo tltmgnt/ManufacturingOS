@@ -6,6 +6,7 @@ import os
 from pathlib import Path, PurePosixPath
 import stat
 
+from .jsonio import read_json
 from .calculations import fields, nonempty
 from .models import ManufacturingInput
 from .sources import MAX_SOURCE_BYTES, MAX_SOURCE_FILES, verify_sources
@@ -102,8 +103,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", type=Path, required=True, help="Create a new source snapshot without overwriting")
     args = parser.parse_args(argv)
     try:
-        data = json.loads(args.input.read_text(encoding="utf-8"))
-        snapshot = capture_sources(data, json.loads(args.manifest.read_text(encoding="utf-8")), args.root)
+        data = read_json(args.input)
+        snapshot = capture_sources(data, read_json(args.manifest), args.root)
         verification = verify_sources(data, snapshot)
         encoded = json.dumps(snapshot, indent=2, sort_keys=True, allow_nan=False)+"\n"
         with args.output.open("x", encoding="utf-8") as file:

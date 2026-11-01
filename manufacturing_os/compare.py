@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .jsonio import read_json, MAX_REPORT_BYTES
 from .models import digest
 from .study import reconstruct_report
 
@@ -139,8 +140,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", type=Path, help="Create a comparison report without overwriting")
     args = parser.parse_args(argv)
     try:
-        result = compare_studies(json.loads(args.before.read_text(encoding="utf-8")),
-                                 json.loads(args.after.read_text(encoding="utf-8")))
+        result = compare_studies(read_json(args.before, max_bytes=MAX_REPORT_BYTES),
+                                 read_json(args.after, max_bytes=MAX_REPORT_BYTES))
         encoded = json.dumps(result, indent=2, sort_keys=True, allow_nan=False)+"\n"
         if args.output:
             with args.output.open("x", encoding="utf-8") as file:

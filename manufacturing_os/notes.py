@@ -3,6 +3,7 @@ from copy import deepcopy
 import json
 from pathlib import Path
 
+from .jsonio import read_json, MAX_REPORT_BYTES
 from .calculations import fields, nonempty
 from .evidence import utc_timestamp
 from .models import digest
@@ -98,16 +99,16 @@ def main(argv: list[str] | None = None) -> int:
     check.add_argument("notes", type=Path)
     args = parser.parse_args(argv)
     try:
-        report = json.loads(args.report.read_text(encoding="utf-8"))
+        report = read_json(args.report, max_bytes=MAX_REPORT_BYTES)
         if args.command == "add":
             entry = {key: getattr(args, key) for key in ("note_id", "reviewer", "role", "timestamp", "comment", "disposition", "finding_code")}
-            prior = json.loads(args.notes.read_text(encoding="utf-8")) if args.notes else None
+            prior = read_json(args.notes, max_bytes=MAX_REPORT_BYTES) if args.notes else None
             log = add_note(report, entry, prior, args.review_id)
             result = assess_notes(report, log)
             with args.output.open("x", encoding="utf-8") as file:
                 file.write(json.dumps(log, indent=2, sort_keys=True, allow_nan=False)+"\n")
         else:
-            result = assess_notes(report, json.loads(args.notes.read_text(encoding="utf-8")))
+            result = assess_notes(report, read_json(args.notes, max_bytes=MAX_REPORT_BYTES))
         print(json.dumps(result, sort_keys=True))
         return 1 if result["state"] == "REQUESTED_CHANGES" else 0
     except (ValueError, TypeError, KeyError, OSError, OverflowError, ZeroDivisionError) as exc:

@@ -3,6 +3,7 @@ from dataclasses import asdict, dataclass
 import math
 from typing import Any
 
+from .jsonio import read_json
 from .models import digest, nonempty
 
 MODEL_VERSION = "serial-route-1.0"
@@ -187,9 +188,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--variants", type=Path, help="JSON object mapping names to complete scenarios")
     args = parser.parse_args(argv)
     try:
-        data = json.loads(args.scenario.read_text())
+        data = read_json(args.scenario)
         if args.variants:
-            variants = json.loads(args.variants.read_text())
+            variants = read_json(args.variants)
             if not isinstance(variants, dict):
                 raise ValueError("variants must be an object")
             result = sensitivity(data, variants)

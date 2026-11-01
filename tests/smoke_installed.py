@@ -70,6 +70,11 @@ def main():
         run([executable,'campaign-bundle','create',ROOT/'examples/scenario-campaign.json','--output',campaign_bundle])
         checked_campaign=json.loads(run([executable,'campaign-bundle','verify',campaign_bundle]))
         assert checked_campaign['campaign_status']=='PASS' and checked_campaign['revision_required_studies']==3
+        ambiguous=working/'ambiguous.json'
+        valid_spec=json.loads((ROOT/'examples/integrated-study.json').read_text())
+        ambiguous.write_text('{"schema_version":"1.0",'+json.dumps(valid_spec)[1:])
+        rejected=subprocess.run([str(executable),'study',str(ambiguous)],cwd=working,env=env,capture_output=True,text=True)
+        assert rejected.returncode==2 and 'duplicate JSON key' in rejected.stderr
         before=working/'before.json'
         after=working/'after.json'
         review=working/'review.html'
