@@ -1,0 +1,44 @@
+{
+  "context": {
+    "batch_size": 3,
+    "design_revision": "A",
+    "facility_id": "synthetic-shop",
+    "facility_revision": "1",
+    "horizon": {
+      "unit": "h",
+      "value": 5
+    },
+    "product_id": "demo-bracket",
+    "scenario_fingerprint": "512ff1ce0ac25749ed0f72a5a10f39d6d1ce50100c844ef976d6331f05f6cf25",
+    "simulation_config_fingerprint": "a1c0da394030bbe51ef0d43c6a1b761819f5178549a6cc3a5b9579cf22766a28"
+  },
+  "metrics": {
+    "batch_completion_time": {
+      "unit": "h",
+      "value": 7
+    },
+    "eventual_good_units": {
+      "unit": "piece",
+      "value": 3
+    },
+    "full_batch_total_cost": {
+      "unit": "USD",
+      "value": 225
+    },
+    "full_batch_unit_cost": {
+      "unit": "USD/good_piece",
+      "value": 75
+    },
+    "good_by_horizon": {
+      "unit": "piece",
+      "value": 2
+    },
+    "wip_at_horizon": {
+      "unit": "piece",
+      "value": 1
+    }
+  },
+  "observation_count": 1,
+  "reference_kind": "synthetic",
+  "schema_version": "1.0"
+}

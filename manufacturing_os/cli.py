@@ -18,6 +18,7 @@ COMMANDS = {
     "capture": ("capture", "Capture manifest-selected files into a source snapshot"),
     "notes": ("notes", "Record or check revision-bound reviewer feedback"),
     "replicate": ("replications", "Repeat finite-batch simulation across recorded seeds"),
+    "observations": ("observations", "Inspect source-backed reference agreement checks"),
 }
 
 

@@ -90,3 +90,12 @@ jobs:
           name: synthetic-replicated-review-python-${{ matrix.python-version }}
           path: ci-replicated-bundle.zip
           if-no-files-found: error
+      - run: python -m manufacturing_os.cli study examples/observation-study.json --output ci-observation-study.json
+      - run: python -m manufacturing_os.cli observations ci-observation-study.json
+      - run: python -m manufacturing_os.cli bundle create examples/observation-study.json --output ci-observation-bundle.zip
+      - run: python -m manufacturing_os.cli bundle verify ci-observation-bundle.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-observation-review-python-${{ matrix.python-version }}
+          path: ci-observation-bundle.zip
+          if-no-files-found: error

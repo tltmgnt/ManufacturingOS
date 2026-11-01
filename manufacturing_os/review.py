@@ -159,12 +159,22 @@ def render_review(report: dict, notes: dict | None = None) -> str:
                         [measurement(stats[key]) if stats else "Undefined" for key in ("p05","p50","p95","mean")])
         replication_html += table("Seeded run summaries (defined values only)", ["Metric","Defined runs","Undefined runs","P05","Median","P95","Mean"], rows)
         replication_html += "<ul>"+"".join(f"<li>{text(item)}</li>" for item in repeated["limitations"])+"</ul></section>"
+    observation_html = ""
+    if "observation_report" in report:
+        observed = report["observation_report"]
+        observation_html = f"<section><h2>Captured observation reference: {text(observed['status'])}</h2><p>Evidence {text(observed['evidence_id'])}; source {text(observed['source_uri'])}; revision {text(observed['source_revision'])}; kind {text(observed['reference_kind'])}; declared observations {text(observed['observation_count'])}.</p>"
+        observation_html += "<ul>"+"".join(f"<li>{text(issue)}</li>" for issue in observed["issues"])+"</ul>"
+        observation_html += table("Reference versus replication mean", ["Metric","Observed","Model mean","Residual","Absolute tolerance","Result / issue"], [
+            [text(row["metric"]),measurement(row["observed"]),measurement(row["model_mean"]) if row["model_mean"] else "Unavailable",
+             measurement(row["residual"]) if row["residual"] else "Unavailable",measurement(row["absolute_tolerance"]),text(row["status"])+" "+text(row["issue"] or "")]
+            for row in observed["checks"]])
+        observation_html += "<ul>"+"".join(f"<li>{text(item)}</li>" for item in observed["limitations"])+"</ul></section>"
     body = f"""<header><p class=eyebrow>ManufacturingOS · advisory study</p><h1>{text(report['study_id'])}</h1>
 <p class=state>{text(report['review_state'])}</p><p class=notice>Production authorization: FALSE. All approvals remain pending. Models are unvalidated; real facility calibration is outstanding.</p></header>
 <nav aria-label='Report sections'><a href='#findings'>Findings</a><a href='#estimates'>Estimates</a><a href='#batch'>Finite batch</a><a href='#uncertainty'>Uncertainty</a><a href='#references'>References</a><a href='#plan'>Plan</a><a href='#provenance'>Provenance</a></nav>
 <main><section id=findings><h2>Review findings</h2><ul class=findings>{findings_html}</ul>{summary}</section>{notes_html}
 <section id=estimates><h2>Capacity and cost estimates</h2><p>Expected-value steady-state model; fractional starts are intentional. Costs are estimates in the declared currency.</p>{estimates}{capacity}</section>
-<section id=batch><h2>Finite-batch simulation</h2><p>Seed {text(report['input']['simulation']['seed'])}. This is one seeded outcome. Queue waits and eventual completion include events beyond the horizon.</p>{batch_summary}{calendar_html}{queues}{cost_html}</section>{replication_html}
+<section id=batch><h2>Finite-batch simulation</h2><p>Seed {text(report['input']['simulation']['seed'])}. This is one seeded outcome. Queue waits and eventual completion include events beyond the horizon.</p>{batch_summary}{calendar_html}{queues}{cost_html}</section>{replication_html}{observation_html}
 <section id=uncertainty><h2>Uncertainty exploration</h2><p>{text(uncertainty['sample_count'])} samples; seed {text(report['input']['uncertainty']['seed'])}. {text(uncertainty['feasible_samples'])} sampled scenarios fit steady-state capacity. This fraction is not a calibrated manufacturing risk probability. Percentiles describe sampled model outputs, not confidence intervals.</p>{ranges}{sampled}</section>
 <section id=references><h2>Synthetic reference checks</h2>{reference_html}</section>
 <section id=plan><h2>Original plan verification: {text(plan['verification']['status'])}</h2>{plan_findings}<h3>Conflicts</h3>{conflicts}{specialist}<h3>Required approval roles</h3>{approvals}</section>

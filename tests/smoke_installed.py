@@ -40,7 +40,7 @@ def main():
         version=run([executable,'--version']).strip()
         location=run([python,'-c','import manufacturing_os; print(manufacturing_os.__file__)']).strip()
         assert Path(location).resolve().is_relative_to(environment.resolve()), location
-        for command in ['plan','estimate','experiment','simulate','study','review','compare','bundle','evidence','sources','capture','notes','replicate']:
+        for command in ['plan','estimate','experiment','simulate','study','review','compare','bundle','evidence','sources','capture','notes','replicate','observations']:
             run([executable,command,'--help'])
         evidence=json.loads(run([executable,'evidence',ROOT/'examples/evidence-input.json',ROOT/'examples/evidence-policy.json']))
         assert evidence['status']=='METADATA_CHECKS_PASSED'
@@ -60,6 +60,10 @@ def main():
         assert replicated['run_count']==20
         replay=json.loads(run([executable,'replicate',ROOT/'examples/replication-experiment.json','--replay','0']))
         assert replay['input']['seed']==replicated['outcomes'][0]['seed']
+        observation_study=working/'observation-study.json'
+        run([executable,'study',ROOT/'examples/observation-study.json','--output',observation_study])
+        checked=json.loads(run([executable,'observations',observation_study]))
+        assert checked['status']=='PASS' and len(checked['checks'])==6
         before=working/'before.json'
         after=working/'after.json'
         review=working/'review.html'

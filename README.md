@@ -18,7 +18,7 @@ manufacturing-os bundle create examples/integrated-study.json --output study-bun
 manufacturing-os bundle verify study-bundle.zip
 ```
 
-On Windows, activate with `.venv\Scripts\activate` instead. Commands are `plan`, `estimate`, `experiment`, `simulate`, `study`, `review`, `compare`, `bundle`, `evidence`, `sources`, `capture`, `notes`, and `replicate`; each supports `--help` and preserves its component's arguments and exit codes. `python -m manufacturing_os.cli` provides the same router. Existing module commands below continue to work, including the original `python -m manufacturing_os INPUT` planning interface.
+On Windows, activate with `.venv\Scripts\activate` instead. Commands are `plan`, `estimate`, `experiment`, `simulate`, `study`, `review`, `compare`, `bundle`, `evidence`, `sources`, `capture`, `notes`, `replicate`, and `observations`; each supports `--help` and preserves its component's arguments and exit codes. `python -m manufacturing_os.cli` provides the same router. Existing module commands below continue to work, including the original `python -m manufacturing_os INPUT` planning interface.
 
 The package has no third-party runtime dependencies. Building from source uses setuptools and wheel; pip may fetch build tools in its isolated build environment. To install a downloaded CI wheel offline, use `python -m pip install --no-index --no-deps PATH_TO_WHEEL.whl`. Input examples remain in the source checkout and are not installed as package data; pass your own JSON paths when running elsewhere. The versioned prototype is not published to PyPI by this workflow.
 
@@ -308,3 +308,23 @@ The target-met fraction describes these seeded model outcomes. It is not a calib
 Studies can opt in with `replications: {"runs": 20}`. The report uses the exact study simulation template; run zero reproduces its baseline simulation. Findings retain replication scope, sampled target misses, and undefined unit costs. HTML shows defined-value summaries and counts, comparisons flag replication configuration changes, and bundles reconstruct all outcomes. Source timelines are replayable instead of duplicated into every outcome row. Studies without replications retain their previous output.
 
 Experiments allow 1 to 1,000 runs. Aggregate scheduling work is limited to `runs * (batch_size * operation_count + total_machines) <= 2,000,000`; calendar work additionally requires `runs * batch_size * (total_machines + window_count) <= 2,000,000`. The existing per-simulation limits also apply. This bounds repeated work before execution. Invalid inputs, indexes, limits, and I/O errors exit `2`; completed replication/replay exits `0` regardless of sampled target misses. Optional output creation is exclusive. CI and installed-wheel checks exercise replications, replay, and a downloadable synthetic study bundle.
+
+## Captured observation reference checks
+
+```sh
+manufacturing-os study examples/observation-study.json --output observation-study.json
+manufacturing-os observations observation-study.json --output observation-checks.json
+manufacturing-os bundle create examples/observation-study.json --output observation-review.zip
+```
+
+An optional study `observation_checks` selects an evidence ID and absolute tolerances for exactly the metrics declared by a captured JSON reference. It requires metadata policy, captured sources, and replications. The selected record itself must be metadata-eligible and hash-matched; unrelated eligible records cannot make it available. Source JSON is parsed only after those checks and must follow the strict observation-reference contract. Duplicate JSON keys are rejected.
+
+Reference content declares its schema version, kind (`synthetic` or `declared_observations`), positive observation count, context, and numeric unit-bearing metrics. Context must match product/design revision, facility/revision, normalized scenario fingerprint, simulation-configuration fingerprint, batch size, and horizon. These declarations associate the data with the analysis case; they do not authenticate its origin. The readable `examples/observation-reference.json` is the exact source content captured inside the example study.
+
+Checks compare replication means against declared observed values with analyst-supplied nonnegative absolute tolerances. Supported metrics are horizon good/scrap/WIP, eventual good/scrap, batch completion time, full-batch total cost, and full-batch unit cost. Metric units must match exactly; horizon context supports explicit time conversion. A model metric absent from the run or undefined in any replication fails explicitly, rather than comparing a conditional mean that silently excludes no-good-output runs.
+
+The report records reference ID/source/revision/kind/count, context, observed values, model means, signed residuals, tolerances, and per-check PASS/FAIL. Selected-source failure yields `REFERENCE_UNAVAILABLE`; a valid source from another case yields `CONTEXT_MISMATCH`. Those outcomes and failed numeric checks require study revision. Passing reference checks never overrides a simulated target miss, hard constraint, other blocking finding, or pending approval.
+
+The first fixture is independently hand-calculated synthetic arithmetic: three released pieces, one-hour cutting, two-hour finishing, perfect yield, and a five-hour horizon. Two pieces are good by the horizon and the third completes at hour seven. Total batch cost is $225, or $75 per eventual good unit. The study requests two good pieces; tests separately confirm that requesting three remains revision-required despite matching all six reference metrics.
+
+These checks evaluate agreement, not model fitting, facility calibration, statistical confidence, source truth, or generalization. `declared_observations` is a supplied label, not an authorization or authenticity certificate. Real reference data and tolerances need qualified review. HTML and bundles retain results/provenance, comparisons flag changed check configuration, and studies without this feature retain prior output. The observations command first reconstructs the complete study report, then exits `0` for PASS, `1` for failed/unavailable/mismatched references, and `2` for invalid/stale input or I/O errors. Output creation is exclusive. CI and installed-wheel checks exercise the command and a synthetic downloadable reference-review bundle.

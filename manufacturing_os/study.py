@@ -12,6 +12,7 @@ from .models import ManufacturingInput, digest
 from .simulation import simulate_batch
 from .sources import verify_sources
 from .replications import run_replications
+from .observations import evaluate_observations
 
 STUDY_VERSION = "integrated-study-1.0"
 
@@ -23,11 +24,13 @@ def binding(package: dict, scenario: dict) -> dict:
 
 
 def run_study(spec: dict) -> dict:
-    optional = set(spec) & {"evidence_policy", "evidence_snapshot", "replications"} if isinstance(spec, dict) else set()
+    optional = set(spec) & {"evidence_policy", "evidence_snapshot", "replications", "observation_checks"} if isinstance(spec, dict) else set()
     fields(spec, {"schema_version", "study_id", "revision", "manufacturing_input", "scenario", "binding",
                   "simulation", "uncertainty", "reference_suite"} | optional, "study")
     if "evidence_snapshot" in optional and "evidence_policy" not in optional:
         raise ValueError("evidence_snapshot requires evidence_policy")
+    if "observation_checks" in optional and not {"evidence_policy","evidence_snapshot","replications"}<=optional:
+        raise ValueError("observation_checks require evidence_policy, evidence_snapshot, and replications")
     if spec["schema_version"] != "1.0":
         raise ValueError("unsupported study schema")
     for key in ("study_id", "revision"):
@@ -135,6 +138,14 @@ def run_study(spec: dict) -> dict:
                              "message": "Some captured-content records do not match; every requirement has another record meeting both checks."})
         findings.append({"code": "CAPTURED_CONTENT_ONLY", "severity": "REVIEW", "component": "sources",
                          "message": "Captured-byte hash matches do not authenticate source origin or establish claim truth or conformance."})
+    observation_report = None
+    if "observation_checks" in optional:
+        observation_report = evaluate_observations(spec,replication_report,evidence_report,source_report)
+        findings.append({"code":"OBSERVATION_REFERENCE_SCOPE","severity":"REVIEW","component":"observations",
+                         "message":"Reference agreement checks declared observations and tolerances, not model calibration, source authenticity, or manufacturing conformance."})
+        if observation_report["status"] != "PASS":
+            findings.append({"code":"OBSERVATION_REFERENCE_FAILED","severity":"BLOCKING","component":"observations",
+                             "message":"Captured observation reference is unavailable, mismatched, or outside configured comparison tolerances."})
     blocking = any(finding["severity"] == "BLOCKING" for finding in findings)
     result = {"schema_version": "1.0", "study_version": STUDY_VERSION, "study_id": spec["study_id"],
             "study_revision": spec["revision"], "study_fingerprint": digest(spec), "input": deepcopy(spec),
@@ -149,6 +160,8 @@ def run_study(spec: dict) -> dict:
         result["source_report"] = source_report
     if replication_report is not None:
         result["replication_report"] = replication_report
+    if observation_report is not None:
+        result["observation_report"] = observation_report
     return result
 
 
