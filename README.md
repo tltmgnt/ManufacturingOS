@@ -25,6 +25,14 @@ also exercises source validation, raw-to-derived provenance and model comparison
 python -m examples.synthetic_export_intake --output runs/export-intake
 ```
 
+A [synthetic fitting/held-out rehearsal](docs/synthetic-calibration-rehearsal.md)
+freezes a candidate from separate fitting records and retains baseline/candidate
+validation residuals:
+
+```sh
+python -m examples.synthetic_calibration_rehearsal --output runs/calibration-rehearsal
+```
+
 ## Start the calibration milestone
 
 Use the [first-facility calibration protocol](docs/calibration-protocol.md) and
