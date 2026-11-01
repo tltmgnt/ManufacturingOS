@@ -18,7 +18,7 @@ manufacturing-os bundle create examples/integrated-study.json --output study-bun
 manufacturing-os bundle verify study-bundle.zip
 ```
 
-On Windows, activate with `.venv\Scripts\activate` instead. Commands are `plan`, `estimate`, `experiment`, `simulate`, `study`, `review`, `compare`, and `bundle`; each supports `--help` and preserves its component's arguments and exit codes. `python -m manufacturing_os.cli` provides the same router. Existing module commands below continue to work, including the original `python -m manufacturing_os INPUT` planning interface.
+On Windows, activate with `.venv\Scripts\activate` instead. Commands are `plan`, `estimate`, `experiment`, `simulate`, `study`, `review`, `compare`, `bundle`, and `evidence`; each supports `--help` and preserves its component's arguments and exit codes. `python -m manufacturing_os.cli` provides the same router. Existing module commands below continue to work, including the original `python -m manufacturing_os INPUT` planning interface.
 
 The package has no third-party runtime dependencies. Building from source uses setuptools and wheel; pip may fetch build tools in its isolated build environment. To install a downloaded CI wheel offline, use `python -m pip install --no-index --no-deps PATH_TO_WHEEL.whl`. Input examples remain in the source checkout and are not installed as package data; pass your own JSON paths when running elsewhere. The versioned prototype is not published to PyPI by this workflow.
 
@@ -178,3 +178,22 @@ The verifier never extracts files. It checks the archive's allowed file set, rej
 ZIP entry order, timestamps, and permissions are fixed for reproducible builds within the same Python/compression stack. Verification compares uncompressed contents, so compression metadata does not need to match. Limits are 64 MiB compressed and 128 MiB total uncompressed. The complete bundle is generated before exclusive output creation; existing files are preserved, and a failed output write removes its partial file. Parent directories must exist.
 
 Create and verify exit `0` when packaging/content checks complete, including for a study requiring revision. Inspect the reported `review_state`; neither command changes approval state. Invalid inputs, corrupt/mismatched archives, limits, and I/O errors exit `2`. CI builds and verifies a synthetic bundle on each supported Python version and uploads it as a downloadable workflow artifact.
+
+## Evidence metadata policies
+
+```sh
+manufacturing-os evidence examples/evidence-input.json examples/evidence-policy.json
+manufacturing-os study examples/evidence-study.json --output evidence-study-report.json
+manufacturing-os review evidence-study-report.json --output evidence-study-review.html
+manufacturing-os bundle create examples/evidence-study.json --output evidence-study-bundle.zip
+```
+
+Evidence checks are opt-in through a study's `evidence_policy` field; existing studies retain their previous output when that field is absent. The standalone command accepts a ManufacturingInput and policy. Each policy declares its ID/revision, a timezone-aware UTC `as_of`, nonnegative maximum capture age in `day`, a boolean requirement for declared SHA-256 hashes, and exact pinned source URI/owner/revision/type tuples. Source URIs must be unique in the policy. No URI is fetched.
+
+Records captured after `as_of`, older than the configured age limit, or with unpinned/mismatched source metadata are excluded from eligible coverage. A record exactly at the age limit is accepted. Supplied content hashes must be raw 64-character hexadecimal SHA-256 strings; required but absent hashes exclude the record. A well-formed hash is labeled `DECLARED_NOT_VERIFIED`: no source bytes or identity have been checked. Capture age describes the record timestamp, not the age of its underlying content.
+
+Every requirement must have at least one eligible record naming its ID. Reports show `COVERAGE_GAPS`, `COVERED_WITH_EXCLUSIONS`, or `METADATA_CHECKS_PASSED`, with record-level issues, ages, hash status, requirement coverage, and policy/input fingerprints. Naming a claim is metadata coverage, not proof the claim is true or the requirement is substantively verified. Pinned source owners remain declared identities; these checks do not authenticate them.
+
+Coverage gaps create a blocking study finding and `REVISION_REQUIRED`. Excluded extra records with otherwise complete coverage create a review finding. All policy-enabled studies retain an explicit metadata-only limitation and pending human approval. HTML reviews show policy checks; comparisons flag policy changes; bundles retain and reconstruct the results. UTC `as_of` is part of the input, so runs remain deterministic and do not silently depend on the wall clock.
+
+The standalone command exits `0` for complete coverage (including excluded extra records), `1` for coverage gaps, and `2` for invalid input/policy or I/O errors. Optional output creation is exclusive. The examples are synthetic; no enterprise connector, substantive evidence verifier, or approval authority is added.

@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .calculations import Scenario, estimate, fields, nonempty
 from .engine import Orchestrator
+from .evidence import assess_evidence
 from .experiments import simulate, validate_references
 from .models import ManufacturingInput, digest
 from .simulation import simulate_batch
@@ -20,8 +21,9 @@ def binding(package: dict, scenario: dict) -> dict:
 
 
 def run_study(spec: dict) -> dict:
+    optional = {"evidence_policy"} if isinstance(spec, dict) and "evidence_policy" in spec else set()
     fields(spec, {"schema_version", "study_id", "revision", "manufacturing_input", "scenario", "binding",
-                  "simulation", "uncertainty", "reference_suite"}, "study")
+                  "simulation", "uncertainty", "reference_suite"} | optional, "study")
     if spec["schema_version"] != "1.0":
         raise ValueError("unsupported study schema")
     for key in ("study_id", "revision"):
@@ -78,14 +80,27 @@ def run_study(spec: dict) -> dict:
     else:
         findings.append({"code": "SYNTHETIC_REFERENCE_ONLY", "severity": "REVIEW", "component": "references",
                          "message": "Passing synthetic reference checks establish arithmetic agreement, not facility validation."})
+    evidence_report = assess_evidence(spec["manufacturing_input"], spec["evidence_policy"]) if optional else None
+    if evidence_report is not None:
+        if evidence_report["uncovered_requirements"]:
+            findings.append({"code": "EVIDENCE_COVERAGE_GAPS", "severity": "BLOCKING", "component": "evidence",
+                             "message": "Requirements lack evidence meeting the configured metadata policy: "+", ".join(evidence_report["uncovered_requirements"])})
+        elif evidence_report["ineligible_record_count"]:
+            findings.append({"code": "INELIGIBLE_EVIDENCE_RECORDS", "severity": "REVIEW", "component": "evidence",
+                             "message": "Some records fail metadata checks; every requirement has at least one eligible record."})
+        findings.append({"code": "EVIDENCE_METADATA_ONLY", "severity": "REVIEW", "component": "evidence",
+                         "message": "Evidence policy checks do not verify source identity, content hashes, claim truth, or substantive conformance."})
     blocking = any(finding["severity"] == "BLOCKING" for finding in findings)
-    return {"schema_version": "1.0", "study_version": STUDY_VERSION, "study_id": spec["study_id"],
+    result = {"schema_version": "1.0", "study_version": STUDY_VERSION, "study_id": spec["study_id"],
             "study_revision": spec["revision"], "study_fingerprint": digest(spec), "input": deepcopy(spec),
             "binding": expected_binding, "plan": asdict(plan), "estimate": calculation,
             "simulation": batch, "uncertainty": exploration, "reference_report": references,
             "findings": findings, "review_state": "REVISION_REQUIRED" if blocking else "HUMAN_REVIEW",
             "required_approvals": list(plan.required_approvals), "approval_state": "PENDING_HUMAN_REVIEW",
             "production_authorized": False}
+    if evidence_report is not None:
+        result["evidence_report"] = evidence_report
+    return result
 
 
 def reconstruct_report(report: dict) -> dict:

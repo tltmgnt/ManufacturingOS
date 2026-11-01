@@ -13,6 +13,7 @@ COMMANDS = {
     "review": ("review", "Export an offline HTML study review"),
     "compare": ("compare", "Compare two reconstructable study reports"),
     "bundle": ("bundle", "Create or verify a portable study bundle"),
+    "evidence": ("evidence", "Check evidence freshness and pinned source metadata"),
 }
 
 

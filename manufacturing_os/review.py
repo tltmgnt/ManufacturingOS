@@ -95,6 +95,17 @@ def render_review(report: dict) -> str:
     evidence = table("Input evidence registry", ["ID", "Source", "Owner", "Revision", "Captured (UTC)", "Claims"], [
         [text(row["evidence_id"]),text(row["source_uri"]),text(row["source_owner"]),text(row["revision"]),text(row["captured_at"]),text(", ".join(row["claim_ids"]))]
         for row in package["evidence"]]) if package["evidence"] else "<p>No input evidence records supplied.</p>"
+    policy_html = ""
+    if "evidence_report" in report:
+        policy_result = report["evidence_report"]
+        policy = policy_result["policy"]
+        policy_html = f"<h3>Evidence metadata policy: {text(policy_result['status'])}</h3><p>Policy {text(policy_result['policy_id'])}, revision {text(policy_result['policy_revision'])}; as of {text(policy['as_of'])}; maximum capture age {measurement(policy['max_age'])}.</p>"
+        policy_html += table("Evidence policy records", ["Evidence", "Capture age", "Metadata eligible", "Issues", "Declared hash"], [
+            [text(row["evidence_id"]), measurement(row["age"]), text(row["metadata_eligible"]), text(", ".join(row["issues"]) or "None"), text(row["declared_hash_status"])]
+            for row in policy_result["records"]])
+        policy_html += table("Eligible requirement coverage", ["Requirement", "Evidence IDs"], [
+            [text(claim), text(", ".join(refs) or "UNCOVERED")] for claim, refs in sorted(policy_result["eligible_coverage"].items())])
+        policy_html += "<ul>"+"".join(f"<li>{text(item)}</li>" for item in policy_result["limitations"])+"</ul>"
     assumptions = ""
     for title, values in [("Estimate",estimate["assumptions"]),("Finite-batch simulation",batch["assumptions"]),("Uncertainty exploration",uncertainty["limitations"])]:
         assumptions += f"<h3>{text(title)}</h3><ul>"+"".join(f"<li>{text(value)}</li>" for value in values)+"</ul>"
@@ -115,7 +126,7 @@ def render_review(report: dict) -> str:
 <section id=uncertainty><h2>Uncertainty exploration</h2><p>{text(uncertainty['sample_count'])} samples; seed {text(report['input']['uncertainty']['seed'])}. {text(uncertainty['feasible_samples'])} sampled scenarios fit steady-state capacity. This fraction is not a calibrated manufacturing risk probability. Percentiles describe sampled model outputs, not confidence intervals.</p>{ranges}{sampled}</section>
 <section id=references><h2>Synthetic reference checks</h2>{reference_html}</section>
 <section id=plan><h2>Original plan verification: {text(plan['verification']['status'])}</h2>{plan_findings}<h3>Conflicts</h3>{conflicts}{specialist}<h3>Required approval roles</h3>{approvals}</section>
-<section><h2>Evidence and assumptions</h2>{evidence}{assumptions}</section>
+<section><h2>Evidence and assumptions</h2>{evidence}{policy_html}{assumptions}</section>
 <section id=provenance><h2>Provenance</h2><p>Report content was reconstructed from the saved study input and matched before rendering. This is a reproducibility check, not a signature, human approval, or proof that source claims are true. Retain the source JSON for full timelines and per-sample audit records.</p>{versions}
 <details><summary>Exact study input</summary><pre>{text(json.dumps(report['input'],indent=2,sort_keys=True))}</pre></details></section></main>
 <footer>ManufacturingOS · {text(EXPORT_VERSION)} · Offline review summary. No approval actions are available.</footer>"""

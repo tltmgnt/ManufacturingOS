@@ -38,3 +38,11 @@ jobs:
           name: manufacturingos-wheel-python-${{ matrix.python-version }}
           path: dist/*.whl
           if-no-files-found: error
+      - run: python -m manufacturing_os.cli evidence examples/evidence-input.json examples/evidence-policy.json
+      - run: python -m manufacturing_os.cli bundle create examples/evidence-study.json --output ci-evidence-bundle.zip
+      - run: python -m manufacturing_os.cli bundle verify ci-evidence-bundle.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-evidence-review-python-${{ matrix.python-version }}
+          path: ci-evidence-bundle.zip
+          if-no-files-found: error
