@@ -118,3 +118,19 @@ Open the HTML file in a browser for a responsive, printable review summary. Bloc
 Before rendering, the exporter re-runs the saved study input and compares the entire report content against reconstruction. Altered results or a model-version mismatch are rejected; regenerate the source report using the matching implementation. Reproducibility is not a cryptographic signature, approval, or validation of source claims. The exact study input is included in a collapsible provenance section.
 
 All input text is escaped. Source references remain plain text, and the HTML uses no scripts, forms, external fonts, images, or network resources. Internal section links aid navigation. A content security policy restricts resources to the embedded styles. The exporter preserves existing output files and exits `2` on invalid, stale, non-reproducible, or unwritable input/output. A completed export exits `0`, including reports that require revision. The export provides no approval actions or production authorization.
+
+## Compare study revisions
+
+```sh
+python -m manufacturing_os.study examples/integrated-study.json --output before.json
+python -m manufacturing_os.study examples/integrated-study-revised.json --output after.json
+python -m manufacturing_os.compare before.json after.json --output comparison.json
+```
+
+The comparison reconstructs both full study reports before use and requires the same product ID. It records exact input changes as JSON Pointer paths (escaping `~` and `/`), distinguishing absent fields from explicit `null`. Input arrays retain positional ordering; operation result rows are matched by stable operation ID, with additions/removals listed separately. The report also shows changed specialist revisions, before/after plan verification, and findings introduced, retained, changed, or no longer reported.
+
+Numeric result deltas cover cost, yield, starts/scrap, capacity, finite-batch good/scrap/WIP, completion time, and per-operation load/utilization. Deltas are computed only when unit labels match; currency conversion is never inferred. Changes to demand, horizon, facility, currency, simulation seed/batch size, uncertainty configuration, and reference suite are called out as context. Every delta is descriptive. It does not establish causality, statistical significance, improvement, or manufacturing approval. A finding no longer reported is not proof the underlying issue was resolved.
+
+Both source study inputs, revisions, fingerprints, and report-content hashes are retained so the comparison can be reproduced with `compare_studies(run_study(before_input), run_study(after_input))`. Full event timelines and sample outputs remain in the source study JSON files. The revised example adds a second finishing machine: steady-state good-output capacity changes from 76.8 to 108 pieces per horizon. Its synthetic reference suite is explicitly absent until corresponding checks are supplied.
+
+A completed comparison exits `0` regardless of whether either source needs revision. Invalid, stale, altered, cross-product, or unwritable comparisons exit `2`. Output creation is exclusive. The shared reconstruction check is also used by HTML export; approval remains pending in all comparison reports.

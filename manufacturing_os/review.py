@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from .models import digest
-from .study import run_study
+from .study import reconstruct_report
 
 EXPORT_VERSION = "html-review-1.0"
 
@@ -26,11 +26,7 @@ def table(caption: str, headers: list[str], rows: list[list[str]]) -> str:
 
 
 def render_review(report: dict) -> str:
-    if not isinstance(report, dict) or "input" not in report:
-        raise ValueError("expected a complete integrated study report")
-    reconstructed = run_study(report["input"])
-    if digest(report) != digest(reconstructed):
-        raise ValueError("study report differs from reconstruction; regenerate with the matching model version")
+    reconstruct_report(report)
     package = report["input"]["manufacturing_input"]
     scenario = report["input"]["scenario"]
     estimate, batch, uncertainty = report["estimate"], report["simulation"], report["uncertainty"]

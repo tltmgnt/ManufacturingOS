@@ -88,6 +88,16 @@ def run_study(spec: dict) -> dict:
             "production_authorized": False}
 
 
+def reconstruct_report(report: dict) -> dict:
+    """Reject stale or altered reports before downstream consumption."""
+    if not isinstance(report, dict) or "input" not in report:
+        raise ValueError("expected a complete integrated study report")
+    reconstructed = run_study(report["input"])
+    if digest(report) != digest(reconstructed):
+        raise ValueError("study report differs from reconstruction; regenerate with the matching model version")
+    return reconstructed
+
+
 def main() -> int:
     import argparse
     import sys

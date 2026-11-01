@@ -22,3 +22,5 @@ jobs:
       - run: python -m manufacturing_os.study examples/integrated-study.json
       - run: python -m manufacturing_os.study examples/integrated-study.json --output ci-study-report.json
       - run: python -m manufacturing_os.review ci-study-report.json --output ci-study-review.html
+      - run: python -m manufacturing_os.study examples/integrated-study-revised.json --output ci-study-revised.json
+      - run: python -m manufacturing_os.compare ci-study-report.json ci-study-revised.json --output ci-study-comparison.json
