@@ -1,0 +1,39 @@
+name: tag-prototype-release
+on:
+  workflow_run:
+    workflows: [prototype-tests]
+    types: [completed]
+    branches: [main]
+permissions:
+  contents: write
+concurrency:
+  group: prototype-release-v0.1.0
+  cancel-in-progress: false
+jobs:
+  tag:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.head_repository.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Tag tested v0.1.0 prototype once
+        env:
+          RELEASE_COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          RELEASE_VERSION=$(python -c 'import manufacturing_os; print(manufacturing_os.__version__)')
+          if [ "$RELEASE_VERSION" != "0.1.0" ]; then
+            echo "This job only tags the initial v0.1.0 prototype."
+            exit 0
+          fi
+          if git show-ref --verify --quiet refs/tags/v0.1.0; then
+            echo "v0.1.0 already exists; preserving the existing tag."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -a v0.1.0 "$RELEASE_COMMIT_SHA" -m 'ManufacturingOS v0.1.0: alpha advisory prototype'
+          git push origin refs/tags/v0.1.0

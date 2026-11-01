@@ -1,6 +1,8 @@
 # ManufacturingOS
 
-An advisory manufacturing planning system. The reference specifications in this repository describe MADMS; this implementation includes the **Phase 1 deterministic orchestration prototype** and an initial **Phase 2 serial-route calculation model**.
+**v0.1.0 is an alpha advisory prototype.** It includes deterministic mock-agent orchestration and initial manufacturing calculation/simulation tools. The reference specifications describe MADMS; real facility calibration, enterprise integration, and shadow-pilot acceptance remain outstanding.
+
+See [release notes](CHANGELOG.md) for the delivered scope and known limits, and [the roadmap](roadmap.md) for the remaining milestones.
 
 ## Install and use the unified CLI
 

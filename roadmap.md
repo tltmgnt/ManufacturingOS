@@ -1,5 +1,17 @@
 # Development Roadmap
 
+## v0.1.0 baseline and remaining milestones
+
+The release consolidates the reference specifications and advisory prototype into one tested baseline. Phase 1 is implemented with deterministic mock specialists. Phase 2 calculations, simulation, and validation tooling exist, but empirical calibration is not complete. Local evidence capture is an integration foundation, not a live enterprise connector.
+
+Three major milestones remain before a bounded pilot can be accepted:
+
+1. **Authorized reference data and calibrated models.** Select a product family/facility, obtain approved datasets, define acceptance thresholds and held-out checks, and document calibration limits and failures.
+2. **Controlled read-only integration.** Implement selected enterprise connectors, identity/access controls, audit/security testing, and the organization's cybersecurity review.
+3. **Shadow-pilot evaluation and qualified acceptance.** Establish baselines, measure outcomes without controlling equipment, and obtain engineering, quality, cybersecurity, and management review.
+
+The original phases below retain their scope. Phase 5 is a separate optional expansion, not part of prototype or pilot acceptance.
+
 ## Phase 0 — Reference specification
 - Define architecture and agent responsibilities.
 - Establish JSON data contracts.
