@@ -4,6 +4,18 @@
 
 See [release notes](CHANGELOG.md) for the delivered scope and known limits, and [the roadmap](roadmap.md) for the remaining milestones.
 
+## Try a temporary use case
+
+A [synthetic bracket demo](docs/temporary-use-case.md) runs reference agreement and
+a deliberate cost disagreement, exporting offline reviews and verified bundles:
+
+```sh
+python -m examples.temporary_use_case --output runs/temporary-bracket-demo
+```
+
+This keeps workflow development moving while facility data is unavailable.
+Empirical calibration remains open.
+
 ## Start the calibration milestone
 
 Use the [first-facility calibration protocol](docs/calibration-protocol.md) and
