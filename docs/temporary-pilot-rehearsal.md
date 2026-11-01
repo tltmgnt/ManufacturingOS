@@ -100,9 +100,9 @@ internal consistency but still does not authenticate origin, reviewer identity,
 organizational acceptance or production authorization. Source/environment changes
 can prevent reconstruction; use the recorded matching checkout and dependencies.
 
-CI verifies the complete matrix artifact before upload. The browser job refreshes
-its own manifest after adding screenshots, then verifies its diagnostic artifact.
-This internal refresh does not grant authenticity or authorization.
+CI verifies the complete matrix artifact before upload. The browser job stores screenshots outside both repeatability child directories,
+then re-verifies that the paired runs remain byte-repeatable. Screenshots do not
+change either child manifest or grant authenticity or authorization.
 
 Verification also cross-checks the combined/component scorecards against the
 verified study reports, source snapshots, transport bytes/audits and failure

@@ -4,6 +4,17 @@
 
 See [release notes](CHANGELOG.md) for the delivered scope and known limits, and [the roadmap](roadmap.md) for the remaining milestones.
 
+## Run all offline checks
+
+```sh
+python -m examples.offline_suite --output runs/offline-suite
+```
+
+Open `runs/offline-suite/index.html` for verified repeatability, six edge cases
+and the 54-configuration invariant sweep. The [offline suite guide](docs/offline-suite.md)
+explains the single artifact and remaining real-world gates. Only synthetic local
+fixtures and a loopback mock API are used; there are no real-system reads.
+
 ## Run the complete temporary rehearsal
 
 ```sh

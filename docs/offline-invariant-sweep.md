@@ -27,7 +27,7 @@ The command retains original and extended-horizon reports (each includes its
 input), replay/report fingerprints, per-case issues and source provenance.
 `invariant-scorecard.json` reports PASS only when all checks pass. Expected target
 misses and zero-good-output cases remain visible rather than being treated as
-production approvals. CI uploads `offline-synthetic-invariant-sweep` for review.
+production approvals. CI stores these results under `invariants/` in `offline-synthetic-suite`.
 
 Exit 0 means all software invariants passed; exit 1 means completed checks found
 issues; exit 2 means input/execution failure. Existing output is preserved. Use a
@@ -39,3 +39,8 @@ These checks establish bounded model self-consistency, not independent measured
 validation, calibrated probabilities, exhaustive coverage or real-world accuracy.
 The sweep does not claim that arbitrary machine/parameter changes monotonically
 improve stochastic outcomes. Actual calibration and pilot acceptance remain open.
+
+
+Open the suite’s top-level `index.html` for all offline results. The component
+command remains available independently; earlier CI runs retain their original
+artifact names.

@@ -26,10 +26,15 @@ current workflow compares 72 files per run. Random mock tokens are not retained.
 Choose a new output directory outside captured source roots, normally under
 `runs/`. Existing output is preserved. Open `first/index.html` and
 `second/index.html` to inspect results. Each child retains its independent manifest
-and full provenance. CI uploads the pair as `offline-synthetic-repeatability`.
+and full provenance. CI stores the pair under `repeatability/` in `offline-synthetic-suite`.
 
 Exact repeatability in one environment does not establish empirical accuracy,
 independent source truth, cross-platform byte equality, availability guarantees,
 real calibration, enterprise acceptance or an actual shadow pilot. Environment or
 source differences can legitimately produce a mismatch; no such differences are
 silently normalized away.
+
+
+Open the suite’s top-level `index.html` for all offline results. The component
+command remains available independently; earlier CI runs retain their original
+artifact names.
