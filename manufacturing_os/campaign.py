@@ -129,6 +129,15 @@ def run_campaign(spec: dict) -> dict:
     return result
 
 
+def reconstruct_campaign(report: dict) -> dict:
+    if not isinstance(report,dict) or "input" not in report:
+        raise ValueError("expected a complete campaign report")
+    reconstructed = run_campaign(report["input"])
+    if digest(report)!=digest(reconstructed):
+        raise ValueError("campaign report differs from reconstruction")
+    return reconstructed
+
+
 def main(argv: list[str] | None = None) -> int:
     import argparse
     import sys

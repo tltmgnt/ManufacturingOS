@@ -40,7 +40,7 @@ def main():
         version=run([executable,'--version']).strip()
         location=run([python,'-c','import manufacturing_os; print(manufacturing_os.__file__)']).strip()
         assert Path(location).resolve().is_relative_to(environment.resolve()), location
-        for command in ['plan','estimate','experiment','simulate','study','review','compare','bundle','evidence','sources','capture','notes','replicate','observations','campaign']:
+        for command in ['plan','estimate','experiment','simulate','study','review','compare','bundle','evidence','sources','capture','notes','replicate','observations','campaign','campaign-bundle']:
             run([executable,command,'--help'])
         evidence=json.loads(run([executable,'evidence',ROOT/'examples/evidence-input.json',ROOT/'examples/evidence-policy.json']))
         assert evidence['status']=='METADATA_CHECKS_PASSED'
@@ -66,6 +66,10 @@ def main():
         assert checked['status']=='PASS' and len(checked['checks'])==6
         campaign=json.loads(run([executable,'campaign',ROOT/'examples/scenario-campaign.json']))
         assert campaign['status']=='PASS' and campaign['revision_required_studies']==3
+        campaign_bundle=working/'campaign.zip'
+        run([executable,'campaign-bundle','create',ROOT/'examples/scenario-campaign.json','--output',campaign_bundle])
+        checked_campaign=json.loads(run([executable,'campaign-bundle','verify',campaign_bundle]))
+        assert checked_campaign['campaign_status']=='PASS' and checked_campaign['revision_required_studies']==3
         before=working/'before.json'
         after=working/'after.json'
         review=working/'review.html'

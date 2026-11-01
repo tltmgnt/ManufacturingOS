@@ -100,8 +100,8 @@ def verify_bundle(data: bytes) -> dict:
             raise ValueError("bundle contents exceed 128 MiB")
         for entry in entries:
             mode = entry.external_attr >> 16
-            if entry.is_dir() or stat.S_ISLNK(mode) or entry.flag_bits & 1:
-                raise ValueError("directories, symbolic links, and encrypted entries are unsupported")
+            if entry.is_dir() or stat.S_IFMT(mode) not in (0, stat.S_IFREG) or entry.flag_bits & 1:
+                raise ValueError("non-regular entries, directories, symbolic links, and encrypted entries are unsupported")
             if entry.compress_type not in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED):
                 raise ValueError("unsupported bundle compression")
         files = {name: archive.read(name) for name in names}

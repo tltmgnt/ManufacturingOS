@@ -105,3 +105,10 @@ jobs:
           name: synthetic-scenario-campaign-python-${{ matrix.python-version }}
           path: ci-campaign-report.json
           if-no-files-found: error
+      - run: python -m manufacturing_os.cli campaign-bundle create examples/scenario-campaign.json --output ci-campaign-review.zip
+      - run: python -m manufacturing_os.cli campaign-bundle verify ci-campaign-review.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-campaign-review-python-${{ matrix.python-version }}
+          path: ci-campaign-review.zip
+          if-no-files-found: error

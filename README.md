@@ -18,7 +18,7 @@ manufacturing-os bundle create examples/integrated-study.json --output study-bun
 manufacturing-os bundle verify study-bundle.zip
 ```
 
-On Windows, activate with `.venv\Scripts\activate` instead. Commands are `plan`, `estimate`, `experiment`, `simulate`, `study`, `review`, `compare`, `bundle`, `evidence`, `sources`, `capture`, `notes`, `replicate`, `observations`, and `campaign`; each supports `--help` and preserves its component's arguments and exit codes. `python -m manufacturing_os.cli` provides the same router. Existing module commands below continue to work, including the original `python -m manufacturing_os INPUT` planning interface.
+On Windows, activate with `.venv\Scripts\activate` instead. Commands are `plan`, `estimate`, `experiment`, `simulate`, `study`, `review`, `compare`, `bundle`, `evidence`, `sources`, `capture`, `notes`, `replicate`, `observations`, `campaign`, and `campaign-bundle`; each supports `--help` and preserves its component's arguments and exit codes. `python -m manufacturing_os.cli` provides the same router. Existing module commands below continue to work, including the original `python -m manufacturing_os INPUT` planning interface.
 
 The package has no third-party runtime dependencies. Building from source uses setuptools and wheel; pip may fetch build tools in its isolated build environment. To install a downloaded CI wheel offline, use `python -m pip install --no-index --no-deps PATH_TO_WHEEL.whl`. Input examples remain in the source checkout and are not installed as package data; pass your own JSON paths when running elsewhere. The versioned prototype is not published to PyPI by this workflow.
 
@@ -342,3 +342,20 @@ Campaign `PASS` means the configured software expectations matched. It does not 
 Campaigns support 1 to 20 unique case IDs, 32 MiB of embedded JSON input, and 128 MiB of full output. Preflight aggregates estimated scheduling work (baseline plus replications, including calendar candidate work) and uncertainty-model work, capped at 2,000,000 units, with at most 10,000 total uncertainty samples. Underlying per-study limits still apply. Malformed studies are recorded as case errors when execution is within the campaign's structural/resource limits. No source URI/path scanning or extra source retrieval occurs; captured bytes remain in their explicit study inputs.
 
 Reports use compact sorted JSON to bound size and retain exact data. Re-running `run_campaign(report["input"])` reconstructs the deterministic campaign. `--output` exclusively creates a new file and prints a compact summary; without it, stdout contains the full report. Exit codes are `0` when every case matches, `1` for expectation mismatches or child execution errors, and `2` for invalid campaign structure, aggregate limits, or I/O errors. No file is created until the campaign finishes and output limits are checked. Existing output is preserved. CI and the isolated installed-wheel workflow exercise the example, and CI uploads the full synthetic campaign report.
+
+## Portable campaign review bundles
+
+```sh
+manufacturing-os campaign-bundle create examples/scenario-campaign.json --output campaign-review.zip
+manufacturing-os campaign-bundle verify campaign-review.zip
+```
+
+Open `campaign-review.html` after extracting the bundle with your normal archive tool. Its offline overview shows expectation results separately from actual study states, highlights revision-required studies and execution errors, and links to each case's full HTML review and JSON report. Case labels are escaped text; paths use fixed numeric indexes such as `cases/001/study-review.html`, never user-supplied case IDs. Cases that failed to execute have `error.json` instead of a fabricated study report.
+
+The ZIP includes `campaign-input.json`, `campaign-report.json`, `campaign-review.html`, `README.txt`, a checksum/size manifest, and indexed per-case files. The overview uses no scripts, forms, external fonts/images, or network resources. Full study inputs and captured bytes travel with the JSON records. The campaign report is reconstructed before overview rendering, and each completed study is reconstructed before its review is exported.
+
+Verification does not extract files. It bounds file count and compressed/uncompressed size, enforces known root/indexed names, rejects duplicate paths, directories, non-regular file metadata, encryption, and unsupported compression, then reconstructs every expected file from the campaign input. Both campaign and existing study bundle verifiers reject special device/FIFO/socket metadata in addition to symlinks. Checksums alone cannot hide edited reports with an unchanged input, but content consistency is not a signature, source authentication, model calibration, or formal approval.
+
+ZIP order/timestamps/permissions are fixed for reproducible builds within the same runtime/compression stack; verification compares uncompressed content, not compression metadata. Limits are 64 MiB compressed and 128 MiB total uncompressed, plus the campaign's own input/work limits. Per-case JSON/HTML duplicates some campaign-report content, so a campaign that fits its standalone report limit can still be too large for a review bundle. All files are generated before exclusive archive output; existing output is preserved.
+
+Create/verify exit `0` when packaging/content reconstruction succeeds, including campaigns whose software expectations failed. Inspect `campaign_status`, `revision_required_studies`, and `execution_errors`; successful packaging never changes those states or grants approval. Invalid input, corrupt/mismatched content, limits, and I/O errors exit `2`. CI and installed-wheel checks build and verify the synthetic campaign and upload the complete review ZIP.
