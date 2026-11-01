@@ -4,8 +4,11 @@ Install requirements-browser-tests.txt and run `playwright install chromium`.
 Execute from the repository root after generating runs/browser-pilot.
 """
 from pathlib import Path
+import sys
 
 from playwright.sync_api import sync_playwright
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from examples.rehearsal_integrity import write_manifest, verify_rehearsal
 
 
 def main():
@@ -75,6 +78,8 @@ def main():
             page.screenshot(path=str(screenshots / f"{case}-review.png"), full_page=True)
         assert not errors, errors
         browser.close()
+    write_manifest(pilot, replace=True)
+    verify_rehearsal(pilot)
     print("Chromium: 3 viewport checks, 14 local links, 4 review navigations; 13 screenshots saved, including combined and failure reviews at 3 widths.")
     print("Automated browser checks passed; screenshots still require human visual review.")
 

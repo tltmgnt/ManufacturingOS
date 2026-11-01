@@ -8,6 +8,7 @@ from manufacturing_os._version import __version__
 from .mock_enterprise_api import run_api_rehearsal
 from .mock_api_failures import run_failures
 from .rehearsal_provenance import SOURCE_ROOT, capture_provenance, verify_source_unchanged
+from .rehearsal_integrity import write_manifest
 from .synthetic_calibration_rehearsal import run_rehearsal
 from .synthetic_export_intake import run_intake
 from .temporary_use_case import encode, run_demo
@@ -119,6 +120,8 @@ def run_pilot(output: Path) -> dict:
         (output / "rehearsal-scorecard.json").write_bytes(encode(summary))
         (output / "index.html").write_text(render_index(summary), encoding="utf-8")
         status_path.write_bytes(encode({**status, "status": "COMPLETE", "phase": "complete"}))
+        phase = "manifest"
+        write_manifest(output)
         return summary
     except Exception:
         # Preserve partial outputs for diagnosis; never report an incomplete run as PASS.
