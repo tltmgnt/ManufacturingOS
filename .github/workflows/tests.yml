@@ -54,3 +54,5 @@ jobs:
           name: synthetic-source-review-python-${{ matrix.python-version }}
           path: ci-source-bundle.zip
           if-no-files-found: error
+      - run: python -m manufacturing_os.cli capture examples/source-input.json examples/capture-manifest.json --root examples/source-files --output ci-captured-source.json
+      - run: python -m manufacturing_os.cli sources examples/source-input.json ci-captured-source.json

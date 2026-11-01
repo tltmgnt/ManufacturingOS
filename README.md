@@ -18,7 +18,7 @@ manufacturing-os bundle create examples/integrated-study.json --output study-bun
 manufacturing-os bundle verify study-bundle.zip
 ```
 
-On Windows, activate with `.venv\Scripts\activate` instead. Commands are `plan`, `estimate`, `experiment`, `simulate`, `study`, `review`, `compare`, `bundle`, `evidence`, and `sources`; each supports `--help` and preserves its component's arguments and exit codes. `python -m manufacturing_os.cli` provides the same router. Existing module commands below continue to work, including the original `python -m manufacturing_os INPUT` planning interface.
+On Windows, activate with `.venv\Scripts\activate` instead. Commands are `plan`, `estimate`, `experiment`, `simulate`, `study`, `review`, `compare`, `bundle`, `evidence`, `sources`, and `capture`; each supports `--help` and preserves its component's arguments and exit codes. `python -m manufacturing_os.cli` provides the same router. Existing module commands below continue to work, including the original `python -m manufacturing_os INPUT` planning interface.
 
 The package has no third-party runtime dependencies. Building from source uses setuptools and wheel; pip may fetch build tools in its isolated build environment. To install a downloaded CI wheel offline, use `python -m pip install --no-index --no-deps PATH_TO_WHEEL.whl`. Input examples remain in the source checkout and are not installed as package data; pass your own JSON paths when running elsewhere. The versioned prototype is not published to PyPI by this workflow.
 
@@ -215,3 +215,18 @@ A study can opt in with `evidence_snapshot`, which requires `evidence_policy`. C
 The exact supplied source bytes remain base64-encoded in the study input and therefore travel with the JSON report, HTML provenance input, and bundle. They are not rendered or interpreted as documents. Verification checks supplied-byte consistency with supplied declarations; it does not authenticate origin, prove claim truth, or establish manufacturing conformance. Source content and policy results are separate components in the HTML report, and comparisons flag snapshot changes.
 
 The standalone command exits `0` when every requirement has hash-matched coverage (including excluded extras), `1` for content coverage gaps, and `2` for invalid/stale inputs or I/O errors. Optional output creation is exclusive. The installed-wheel smoke test covers the new command; CI also builds, verifies, and uploads a synthetic source-backed review bundle.
+
+## Capture selected local source files
+
+```sh
+manufacturing-os capture examples/source-input.json examples/capture-manifest.json --root examples/source-files --output captured-snapshot.json
+manufacturing-os sources examples/source-input.json captured-snapshot.json
+```
+
+The capture manifest declares its schema version, snapshot ID/revision, and explicit evidence-ID/relative-path selections. The command reads only those selected files under the caller's required `--root`; it does not scan directories, infer paths from source URIs, or modify the input package or declared hashes. The output is the same source snapshot contract consumed by `sources` and an integrated study's `evidence_snapshot`. Retain the capture manifest separately if the original local path mapping is needed.
+
+Paths must be canonical relative POSIX paths: no absolute/drive paths, traversal, backslashes, `.` aliases, or duplicate selections. Files are opened using descriptor-relative, no-follow operations rooted at the selected directory; symlink components and non-regular files are rejected. Nonblocking opens prevent FIFOs from hanging capture. Source size, identity, and modification/change timestamps are compared on the same descriptor before/after reading, and changes during capture are rejected. The selected root is resolved once, then held open for the capture. The existing 1,000-file/16-MiB limits apply cumulatively.
+
+Secure capture requires POSIX `dir_fd`, `O_NOFOLLOW`, `O_DIRECTORY`, and `O_NONBLOCK` support. It fails explicitly on unsupported platforms rather than falling back to weaker path handling. Existing snapshot verification, studies, exports, and bundles remain portable; Windows users can consume snapshots produced in a supported environment.
+
+All selections are validated and captured before output creation. Existing snapshot output is preserved. The command emits a summary and exits `0` for complete hash coverage, `1` when capture succeeded but declared-hash coverage is incomplete, and `2` for invalid input, unsupported platform, path restrictions, changed files, resource limits, or I/O errors. An exit-1 snapshot is retained for inspection; expected hashes are never silently replaced. Capturing bytes does not authenticate the source or approve any manufacturing claim.

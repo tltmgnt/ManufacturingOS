@@ -40,12 +40,16 @@ def main():
         version=run([executable,'--version']).strip()
         location=run([python,'-c','import manufacturing_os; print(manufacturing_os.__file__)']).strip()
         assert Path(location).resolve().is_relative_to(environment.resolve()), location
-        for command in ['plan','estimate','experiment','simulate','study','review','compare','bundle','evidence','sources']:
+        for command in ['plan','estimate','experiment','simulate','study','review','compare','bundle','evidence','sources','capture']:
             run([executable,command,'--help'])
         evidence=json.loads(run([executable,'evidence',ROOT/'examples/evidence-input.json',ROOT/'examples/evidence-policy.json']))
         assert evidence['status']=='METADATA_CHECKS_PASSED'
         sources=json.loads(run([executable,'sources',ROOT/'examples/source-input.json',ROOT/'examples/source-snapshot.json']))
         assert sources['status']=='CAPTURED_CONTENT_COVERED'
+        if os.name=='posix':
+            captured=working/'captured.json'
+            run([executable,'capture',ROOT/'examples/source-input.json',ROOT/'examples/capture-manifest.json','--root',ROOT/'examples/source-files','--output',captured])
+            assert json.loads(captured.read_text())==json.loads((ROOT/'examples/source-snapshot.json').read_text())
         before=working/'before.json'
         after=working/'after.json'
         review=working/'review.html'
