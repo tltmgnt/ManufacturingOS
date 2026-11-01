@@ -81,3 +81,27 @@ Each matrix job uploads `synthetic-bracket-demo-python-VERSION` with the summary
 case inputs, reports, HTML reviews, ZIP bundles and verification records. Download
 it from the GitHub Actions run and open the case HTML files locally. Artifacts
 contain synthetic data only and follow the repository's default retention period.
+
+## Browser checks and screenshots
+
+The separate `demo-browser` CI job installs development-only Playwright and
+Chromium. It loads the offline comparison at widths 375, 768 and 1440, checks
+case outcomes and viewport overflow, checks local links, and follows each case's
+review link in Chromium. External HTTP/HTTPS requests are blocked.
+
+The `synthetic-demo-browser-review` artifact includes six screenshots (three
+comparison widths and three full case reviews) plus the generated demo files.
+Automated browser checks do not replace human visual review of those screenshots.
+Failures retain available files for diagnosis.
+
+To reproduce from the repository root:
+
+```sh
+python -m pip install -r requirements-browser-tests.txt
+python -m playwright install chromium
+python -m examples.temporary_use_case --output runs/browser-demo
+python tests/check_demo_browser.py
+```
+
+Use fresh output directories. The browser dependencies are not installed with
+the ManufacturingOS runtime package.
