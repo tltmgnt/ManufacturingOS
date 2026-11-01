@@ -18,3 +18,4 @@ jobs:
       - run: python -m manufacturing_os.calculations examples/serial-route.json --variants examples/serial-route-variants.json
       - run: python -m manufacturing_os.experiments validate examples/arithmetic-references.json
       - run: python -m manufacturing_os.experiments simulate examples/uncertainty-experiment.json
+      - run: python -m manufacturing_os.simulation examples/finite-batch.json
