@@ -9,6 +9,7 @@ import sys
 from playwright.sync_api import sync_playwright
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from examples.offline_repeatability import compare_runs
+from examples.offline_suite_integrity import write_suite_manifest, verify_suite
 
 
 def main():
@@ -92,6 +93,8 @@ def main():
         assert not errors, errors
         browser.close()
     assert compare_runs(pilot, suite / "repeatability/second")["status"] == "REPEATABLE"
+    write_suite_manifest(suite, replace=True)
+    verify_suite(suite)
     print("Chromium: 3 viewport checks, 14 local links, 4 review navigations; 16 screenshots saved, including offline-suite, combined and failure reviews at 3 widths.")
     print("Automated browser checks passed; screenshots still require human visual review.")
 

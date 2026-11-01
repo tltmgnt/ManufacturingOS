@@ -46,24 +46,24 @@ def safe_path(name):
     return name
 
 
-def inventory(root: Path) -> list[dict]:
+def inventory(root: Path, *, max_files=250, max_entries=500, max_total=MAX_TOTAL, exclude_manifest=MANIFEST) -> list[dict]:
     if root.is_symlink() or not root.is_dir():
         raise ValueError("Rehearsal root must be a regular directory")
     records, nodes, total = [], 0, 0
     for directory, dirs, files in os.walk(root, followlinks=False):
         nodes += len(dirs) + len(files)
-        if nodes > 500:
+        if nodes > max_entries:
             raise ValueError("Too many rehearsal entries")
         if any((Path(directory) / name).is_symlink() for name in dirs + files):
             raise ValueError("Rehearsal verification rejects symlinks")
         for name in sorted(files):
             path = Path(directory) / name
             relative = safe_path(path.relative_to(root).as_posix())
-            if relative == MANIFEST:
+            if relative == exclude_manifest:
                 continue
             raw = read_file(path)
             total += len(raw)
-            if total > MAX_TOTAL or len(records) >= 250:
+            if total > max_total or len(records) >= max_files:
                 raise ValueError("Rehearsal exceeds file/count limits")
             records.append({"path": relative, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()})
     return sorted(records, key=lambda row: row["path"])
