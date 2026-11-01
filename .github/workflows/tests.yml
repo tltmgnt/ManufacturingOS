@@ -14,6 +14,13 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: python -m unittest discover -s tests -v
+      - name: Run temporary synthetic baseline and disagreement cases
+        run: python -m examples.temporary_use_case --output runs/temporary-bracket-demo
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-bracket-demo-python-${{ matrix.python-version }}
+          path: runs/temporary-bracket-demo/
+          if-no-files-found: error
       - run: python -m manufacturing_os examples/synthetic-cnc.json
       - run: python -m manufacturing_os.calculations examples/serial-route.json --variants examples/serial-route-variants.json
       - run: python -m manufacturing_os.experiments validate examples/arithmetic-references.json
