@@ -24,3 +24,10 @@ jobs:
       - run: python -m manufacturing_os.review ci-study-report.json --output ci-study-review.html
       - run: python -m manufacturing_os.study examples/integrated-study-revised.json --output ci-study-revised.json
       - run: python -m manufacturing_os.compare ci-study-report.json ci-study-revised.json --output ci-study-comparison.json
+      - run: python -m manufacturing_os.bundle create examples/integrated-study-revised.json --before ci-study-report.json --output ci-study-bundle.zip
+      - run: python -m manufacturing_os.bundle verify ci-study-bundle.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-study-review-python-${{ matrix.python-version }}
+          path: ci-study-bundle.zip
+          if-no-files-found: error

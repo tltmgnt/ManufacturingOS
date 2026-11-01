@@ -134,3 +134,20 @@ Numeric result deltas cover cost, yield, starts/scrap, capacity, finite-batch go
 Both source study inputs, revisions, fingerprints, and report-content hashes are retained so the comparison can be reproduced with `compare_studies(run_study(before_input), run_study(after_input))`. Full event timelines and sample outputs remain in the source study JSON files. The revised example adds a second finishing machine: steady-state good-output capacity changes from 76.8 to 108 pieces per horizon. Its synthetic reference suite is explicitly absent until corresponding checks are supplied.
 
 A completed comparison exits `0` regardless of whether either source needs revision. Invalid, stale, altered, cross-product, or unwritable comparisons exit `2`. Output creation is exclusive. The shared reconstruction check is also used by HTML export; approval remains pending in all comparison reports.
+
+## Portable review bundles
+
+```sh
+python -m manufacturing_os.bundle create examples/integrated-study.json --output study-bundle.zip
+python -m manufacturing_os.bundle verify study-bundle.zip
+# Include a comparison against an existing complete study report:
+python -m manufacturing_os.bundle create examples/integrated-study-revised.json --before before.json --output revised-bundle.zip
+```
+
+Creation runs the study and packages `study-input.json`, `study-report.json`, `study-review.html`, `README.txt`, and `manifest.json` into one ZIP. An optional prior report adds `previous-study-report.json` and `comparison.json`. Open the HTML review after extracting with your normal archive tool; retain the JSON for exact metrics and audit records. The manifest lists SHA-256 hashes and byte sizes of every content file; it does not hash itself.
+
+The verifier never extracts files. It checks the archive's allowed file set, rejects duplicate paths, directories, symlinks, unsupported/encrypted entries, and oversized content, then reconstructs every expected file from the bundled study input and optional prior report. Reports with altered metrics fail even if their manifest checksums have been updated. Verification requires the matching model/export implementation and is content consistency checking, not a signature, source validation, or human approval. The bundle's input can itself be replaced by a different coherent study; authenticity must be established separately.
+
+ZIP entry order, timestamps, and permissions are fixed for reproducible builds within the same Python/compression stack. Verification compares uncompressed contents, so compression metadata does not need to match. Limits are 64 MiB compressed and 128 MiB total uncompressed. The complete bundle is generated before exclusive output creation; existing files are preserved, and a failed output write removes its partial file. Parent directories must exist.
+
+Create and verify exit `0` when packaging/content checks complete, including for a study requiring revision. Inspect the reported `review_state`; neither command changes approval state. Invalid inputs, corrupt/mismatched archives, limits, and I/O errors exit `2`. CI builds and verifies a synthetic bundle on each supported Python version and uploads it as a downloadable workflow artifact.
