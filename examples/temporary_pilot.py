@@ -6,6 +6,7 @@ from pathlib import Path
 
 from manufacturing_os._version import __version__
 from .mock_enterprise_api import run_api_rehearsal
+from .mock_api_failures import run_failures
 from .synthetic_calibration_rehearsal import run_rehearsal
 from .synthetic_export_intake import run_intake
 from .temporary_use_case import encode, run_demo
@@ -33,6 +34,8 @@ Production authorization remains false.</p>
 <li><a href="api/study-review.html">Read-only mock ERP/MES API</a> ·
 <a href="api/transport-provenance.json">Transport provenance</a> ·
 <a href="api/mock-request-audit.json">Request audit</a>.</li>
+<li><a href="api-failures/index.html">Mock API failure rehearsal</a> ·
+<a href="api-failures/failure-scorecard.json">Denied requests and fault evidence</a>.</li>
 <li>Held-out evaluation: <a href="calibration/baseline/study-review.html">baseline</a> and
 <a href="calibration/candidate/study-review.html">frozen candidate</a> ·
 <a href="calibration/frozen-candidate.json">Fitting configuration</a> ·
@@ -69,6 +72,11 @@ def run_pilot(output: Path) -> dict:
         api = run_api_rehearsal(output / "api")
         if api["status"] != "PASS" or api["request_count"] != 1 or api["live_integration_complete"]:
             raise RuntimeError("Mock API rehearsal did not preserve read-only synthetic scope")
+        phase = "api-failures"
+        status_path.write_bytes(encode({**status, "phase": phase}))
+        api_failures = run_failures(output / "api-failures")
+        if api_failures["status"] != "EXPECTED_FAILURES_DETECTED":
+            raise RuntimeError("Mock source faults were not detected")
         phase = "calibration"
         status_path.write_bytes(encode({**status, "phase": phase}))
         calibration = run_rehearsal(output / "calibration")
@@ -87,11 +95,12 @@ def run_pilot(output: Path) -> dict:
                        ["Four planning outcomes, including expected discrepancy and shortfall",
                         "Raw-to-derived synthetic CSV intake and verified bundle",
                         "Read-only loopback API transport with retained provenance",
+                        "Six source/access failures rejected before model execution",
                         "Separate fitting and held-out evaluation with frozen candidate",
                         "Baseline failure and candidate agreement retained without production authorization"]],
-                   "planning": planning, "intake": intake, "api": api, "calibration": calibration}
+                   "planning": planning, "intake": intake, "api": api, "api_failures": api_failures, "calibration": calibration}
         if any(result["production_authorized"] or result["empirical_calibration_complete"]
-               for result in (planning, intake, api, calibration)):
+               for result in (planning, intake, api, api_failures, calibration)):
             raise RuntimeError("A synthetic component incorrectly claimed real-world acceptance")
         phase = "summary"
         (output / "rehearsal-scorecard.json").write_bytes(encode(summary))

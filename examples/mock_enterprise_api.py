@@ -24,8 +24,10 @@ def validate_token(token):
         raise ValueError("Mock token must contain 32–128 URL-safe characters")
 
 
-def handler_for(raw: bytes, audit: list, read_token: str, denied_token: str | None = None):
+def handler_for(raw: bytes, audit: list, read_token: str, denied_token: str | None = None, fault: str | None = None):
     """Immutable fixture responses; write methods never touch a source."""
+    if fault not in (None, "throttled", "unavailable", "stale_revision", "hash_mismatch"):
+        raise ValueError("Unknown synthetic server fault")
     validate_token(read_token)
     if denied_token is not None:
         validate_token(denied_token)
@@ -46,11 +48,13 @@ def handler_for(raw: bytes, audit: list, read_token: str, denied_token: str | No
             self.send_header("Cache-Control", "no-store")
             if status == 401:
                 self.send_header("WWW-Authenticate", "Bearer")
+            if status == 429:
+                self.send_header("Retry-After", "1")
             if status == 405:
                 self.send_header("Allow", "GET")
             if status == 200 and self.path == EXPORT_PATH:
-                self.send_header("X-Source-Revision", SOURCE_REVISION)
-                self.send_header("ETag", '"' + hashlib.sha256(raw).hexdigest() + '"')
+                self.send_header("X-Source-Revision", "stale-fixture" if fault == "stale_revision" else SOURCE_REVISION)
+                self.send_header("ETag", '"' + ("0" * 64 if fault == "hash_mismatch" else hashlib.sha256(raw).hexdigest()) + '"')
             self.end_headers()
             if self.command != "HEAD":
                 self.wfile.write(body)
@@ -76,7 +80,10 @@ def handler_for(raw: bytes, audit: list, read_token: str, denied_token: str | No
             if not self.authorize_read():
                 return
             if self.path == EXPORT_PATH:
-                self.respond(200, raw, "text/csv; charset=utf-8")
+                if fault in ("throttled", "unavailable"):
+                    self.respond(429 if fault == "throttled" else 503, b'{"error":"synthetic service fault"}\n')
+                else:
+                    self.respond(200, raw, "text/csv; charset=utf-8")
             else:
                 self.respond(404, b'{"error":"unknown mock endpoint"}\n')
 
@@ -88,9 +95,9 @@ def handler_for(raw: bytes, audit: list, read_token: str, denied_token: str | No
 
 
 @contextmanager
-def mock_server(raw: bytes, *, read_token: str, denied_token: str | None = None):
+def mock_server(raw: bytes, *, read_token: str, denied_token: str | None = None, fault: str | None = None):
     audit = []
-    server = ThreadingHTTPServer(("127.0.0.1", 0), handler_for(raw, audit, read_token, denied_token))
+    server = ThreadingHTTPServer(("127.0.0.1", 0), handler_for(raw, audit, read_token, denied_token, fault))
     server.daemon_threads = True
     thread = threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.05}, daemon=True)
     thread.start()
@@ -141,14 +148,31 @@ def fetch_export(port: int, token: str) -> tuple[bytes, dict]:
         connection.close()
 
 
-def run_api_rehearsal(output: Path) -> dict:
+class MockAPIRejected(ValueError):
+    """A rejected source response with a credential-free request audit."""
+    def __init__(self, message, audit):
+        super().__init__(message)
+        self.audit = [dict(row) for row in audit]
+
+
+def run_api_rehearsal(output: Path, *, failure: str | None = None) -> dict:
     # Reject previous runs before starting a server or making a request.
     if output.exists() or output.is_symlink():
         raise FileExistsError("Output path already exists")
+    if failure not in (None, "invalid_credential", "insufficient_scope", "throttled", "unavailable", "stale_revision", "hash_mismatch"):
+        raise ValueError("Unknown synthetic API failure")
     raw_fixture = (Path(__file__).resolve().parent / "synthetic-batch-export.csv").read_bytes()
     read_token = secrets.token_urlsafe(32)
-    with mock_server(raw_fixture, read_token=read_token) as (port, audit):
-        received, transport = fetch_export(port, read_token)
+    denied_token = ("y" if read_token[0] == "x" else "x") + read_token[1:]
+    supplied_token = denied_token if failure in ("invalid_credential", "insufficient_scope") else read_token
+    server_fault = failure if failure in ("throttled", "unavailable", "stale_revision", "hash_mismatch") else None
+    with mock_server(raw_fixture, read_token=read_token,
+                     denied_token=denied_token if failure == "insufficient_scope" else None,
+                     fault=server_fault) as (port, audit):
+        try:
+            received, transport = fetch_export(port, supplied_token)
+        except ValueError as exc:
+            raise MockAPIRejected(str(exc), audit) from exc
     result = run_intake_bytes(received, output)
     if result["raw_sha256"] != transport["sha256"]:
         raise RuntimeError("Transport and retained intake bytes differ")
