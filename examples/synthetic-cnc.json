@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "package_id": "synthetic-cnc",
+  "revision": "1",
+  "product_id": "demo-bracket",
+  "design_revision": "A",
+  "bom": [{"item_id": "blank", "revision": "A", "quantity": {"value": 1, "unit": "piece"}}],
+  "requirements": [{"requirement_id": "R1", "description": "Synthetic bracket; drawing review required"}],
+  "demand": {"value": 100, "unit": "piece/month"},
+  "facility": {"facility_id": "synthetic-shop", "revision": "1"},
+  "constraints": [{"constraint_id": "machine-envelope", "kind": "hard", "satisfied": null, "issue": "Machine capability evidence is unavailable"}],
+  "evidence": []
+}
