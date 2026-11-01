@@ -126,13 +126,13 @@ def render_review(report: dict) -> str:
 </style></head><body>"""+body+"</body></html>\n"
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     import argparse
     import sys
     parser = argparse.ArgumentParser(description="Export a reconstructed study report as offline HTML")
     parser.add_argument("report", type=Path)
     parser.add_argument("--output", type=Path, required=True, help="Create a new HTML file; existing files are rejected")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     try:
         output = render_review(json.loads(args.report.read_text(encoding="utf-8")))
         with args.output.open("x", encoding="utf-8") as file:

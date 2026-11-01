@@ -120,14 +120,14 @@ def simulate_batch(spec: dict) -> dict:
             "validation_status": "UNVALIDATED_SIMULATION", "production_authorized": False}
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     import argparse
     import json
     import sys
     parser = argparse.ArgumentParser(description="Run a finite-batch serial-route simulation")
     parser.add_argument("input", type=Path)
     parser.add_argument("--output", type=Path, help="Create a new report without overwriting")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     try:
         result = simulate_batch(json.loads(args.input.read_text(encoding="utf-8")))
         encoded = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"

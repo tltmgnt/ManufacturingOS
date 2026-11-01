@@ -109,14 +109,14 @@ def compare_studies(before: dict, after: dict) -> dict:
             "approval_state": "PENDING_HUMAN_REVIEW", "production_authorized": False}
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     import argparse
     import sys
     parser = argparse.ArgumentParser(description="Compare two reconstructable manufacturing study reports")
     parser.add_argument("before", type=Path)
     parser.add_argument("after", type=Path)
     parser.add_argument("--output", type=Path, help="Create a comparison report without overwriting")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     try:
         result = compare_studies(json.loads(args.before.read_text(encoding="utf-8")),
                                  json.loads(args.after.read_text(encoding="utf-8")))

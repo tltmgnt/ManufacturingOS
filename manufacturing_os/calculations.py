@@ -177,7 +177,7 @@ def sensitivity(data: dict, variants: dict[str, dict]) -> dict:
     return {"baseline": baseline, "variants": results}
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     import argparse
     import json
     import sys
@@ -185,7 +185,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Evaluate an unvalidated synthetic serial route")
     parser.add_argument("scenario", type=Path)
     parser.add_argument("--variants", type=Path, help="JSON object mapping names to complete scenarios")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     try:
         data = json.loads(args.scenario.read_text())
         if args.variants:

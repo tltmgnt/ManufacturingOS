@@ -123,7 +123,7 @@ def publish(path: Path, data: bytes) -> None:
             raise
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     import argparse
     import sys
     parser = argparse.ArgumentParser(description="Create or verify a portable advisory study bundle")
@@ -134,7 +134,7 @@ def main() -> int:
     create.add_argument("--output", type=Path, required=True)
     verify = subparsers.add_parser("verify")
     verify.add_argument("archive", type=Path)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     try:
         if args.command == "create":
             spec = json.loads(args.input.read_text(encoding="utf-8"))

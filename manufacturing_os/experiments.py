@@ -155,14 +155,14 @@ def validate_references(suite: dict) -> dict:
             "production_authorized": False}
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     import argparse
     import sys
     parser = argparse.ArgumentParser(description="Run exploratory simulations or synthetic reference checks")
     parser.add_argument("mode", choices=["simulate", "validate"])
     parser.add_argument("input", type=Path)
     parser.add_argument("--output", type=Path, help="Create a new JSON report; existing files are never overwritten")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     try:
         data = json.loads(args.input.read_text(encoding="utf-8"))
         result = simulate(data) if args.mode == "simulate" else validate_references(data)

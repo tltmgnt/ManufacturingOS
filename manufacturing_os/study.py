@@ -98,13 +98,13 @@ def reconstruct_report(report: dict) -> dict:
     return reconstructed
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     import argparse
     import sys
     parser = argparse.ArgumentParser(description="Run a revision-bound advisory manufacturing study")
     parser.add_argument("input", type=Path)
     parser.add_argument("--output", type=Path, help="Create a complete report without overwriting an existing file")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     try:
         report = run_study(json.loads(args.input.read_text(encoding="utf-8")))
         encoded = json.dumps(report, indent=2, sort_keys=True, allow_nan=False)+"\n"

@@ -7,11 +7,11 @@ from . import ManufacturingInput, Orchestrator
 from .store import save_run
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run synthetic manufacturing planning mocks")
     parser.add_argument("input", type=Path)
     parser.add_argument("--output-dir", type=Path, default=Path("runs"))
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     try:
         package = ManufacturingInput.from_dict(json.loads(args.input.read_text(encoding="utf-8")))
         plan = Orchestrator().run(package)

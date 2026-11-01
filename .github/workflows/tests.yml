@@ -31,3 +31,10 @@ jobs:
           name: synthetic-study-review-python-${{ matrix.python-version }}
           path: ci-study-bundle.zip
           if-no-files-found: error
+      - run: python -m pip wheel --no-deps --wheel-dir dist .
+      - run: python tests/smoke_installed.py dist/*.whl
+      - uses: actions/upload-artifact@v4
+        with:
+          name: manufacturingos-wheel-python-${{ matrix.python-version }}
+          path: dist/*.whl
+          if-no-files-found: error

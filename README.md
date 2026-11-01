@@ -2,6 +2,33 @@
 
 An advisory manufacturing planning system. The reference specifications in this repository describe MADMS; this implementation includes the **Phase 1 deterministic orchestration prototype** and an initial **Phase 2 serial-route calculation model**.
 
+## Install and use the unified CLI
+
+Python 3.11+ is required. From a source checkout:
+
+```sh
+python -m venv .venv
+. .venv/bin/activate
+python -m pip install .
+manufacturing-os --version
+manufacturing-os --help
+manufacturing-os study examples/integrated-study.json --output study-report.json
+manufacturing-os review study-report.json --output study-review.html
+manufacturing-os bundle create examples/integrated-study.json --output study-bundle.zip
+manufacturing-os bundle verify study-bundle.zip
+```
+
+On Windows, activate with `.venv\Scripts\activate` instead. Commands are `plan`, `estimate`, `experiment`, `simulate`, `study`, `review`, `compare`, and `bundle`; each supports `--help` and preserves its component's arguments and exit codes. `python -m manufacturing_os.cli` provides the same router. Existing module commands below continue to work, including the original `python -m manufacturing_os INPUT` planning interface.
+
+The package has no third-party runtime dependencies. Building from source uses setuptools and wheel; pip may fetch build tools in its isolated build environment. To install a downloaded CI wheel offline, use `python -m pip install --no-index --no-deps PATH_TO_WHEEL.whl`. Input examples remain in the source checkout and are not installed as package data; pass your own JSON paths when running elsewhere. The versioned prototype is not published to PyPI by this workflow.
+
+CI builds a wheel, installs it in a fresh virtual environment, and runs the complete study/review/comparison/bundle workflow outside the source checkout. Wheels and synthetic bundles are available as workflow artifacts. Local distribution validation can be run with:
+
+```sh
+python -m pip wheel --no-deps --wheel-dir dist .
+python tests/smoke_installed.py dist/manufacturingos-0.1.0-py3-none-any.whl
+```
+
 ## Run
 
 Python 3.11+; no third-party dependencies, credentials, or network services required.
