@@ -56,7 +56,7 @@ bracket). Tests change the source cost to 220 USD and require a visible +5 USD
 residual and revision-required result, proving the comparison uses export values.
 
 The Python 3.11–3.13 CI matrix runs the rehearsal and uploads
-`synthetic-export-intake-python-VERSION`. Runtime dependencies are unchanged.
+`synthetic-pilot-rehearsal-python-VERSION`. Runtime dependencies are unchanged.
 Hashes prove supplied-byte consistency, not origin or organizational authorization.
 
 When authorized real exports become available, use the [calibration intake](calibration-intake.md)
@@ -64,3 +64,5 @@ to agree on source permissions, actual measurement definitions, accounting scope
 missing outcomes, multiple batches, held-out evaluation and acceptance criteria.
 Real data needs its own reviewed adapter and access controls; do not relabel this
 fixture or weaken its synthetic-only guard to declare a live integration complete.
+
+The consolidated artifact stores this component under `intake/`. Open the top-level `index.html` to review the entire rehearsal.

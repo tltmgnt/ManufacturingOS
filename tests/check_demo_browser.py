@@ -1,7 +1,7 @@
 """Real-Chromium smoke checks for the offline demo, with screenshots for review.
 
 Install requirements-browser-tests.txt and run `playwright install chromium`.
-Execute from the repository root after generating runs/browser-demo.
+Execute from the repository root after generating runs/browser-pilot.
 """
 from pathlib import Path
 
@@ -9,8 +9,9 @@ from playwright.sync_api import sync_playwright
 
 
 def main():
-    root = Path("runs/browser-demo").resolve()
-    screenshots = root / "screenshots"
+    pilot = Path("runs/browser-pilot").resolve()
+    root = pilot / "planning"
+    screenshots = pilot / "screenshots"
     screenshots.mkdir(exist_ok=False)
     errors = []
     with sync_playwright() as playwright:
@@ -20,6 +21,17 @@ def main():
         # Offline pages must not depend on external services or assets.
         page.route("http://**/*", lambda route: route.abort())
         page.route("https://**/*", lambda route: route.abort())
+        for width in (375, 768, 1440):
+            page.set_viewport_size({"width": width, "height": 900})
+            page.goto((pilot / "index.html").as_uri(), wait_until="load")
+            assert page.title() == "ManufacturingOS — synthetic pilot rehearsal"
+            assert page.locator("tbody tr").count() == 4
+            assert "Software rehearsal only" in page.locator(".notice").inner_text()
+            assert page.locator("a").count() == 9
+            for href in page.locator("a").evaluate_all("links => links.map(link => link.getAttribute('href'))"):
+                assert (pilot / href).is_file(), f"Missing combined review link: {href}"
+            assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+            page.screenshot(path=str(screenshots / f"pilot-{width}.png"), full_page=True)
         for width in (375, 768, 1440):
             page.set_viewport_size({"width": width, "height": 900})
             page.goto((root / "index.html").as_uri(), wait_until="load")
@@ -55,7 +67,7 @@ def main():
             page.screenshot(path=str(screenshots / f"{case}-review.png"), full_page=True)
         assert not errors, errors
         browser.close()
-    print("Chromium: 3 viewport checks, 14 local links, 4 review navigations; 7 screenshots saved.")
+    print("Chromium: 3 viewport checks, 14 local links, 4 review navigations; 10 screenshots saved, including the combined review at 3 widths.")
     print("Automated browser checks passed; screenshots still require human visual review.")
 
 
