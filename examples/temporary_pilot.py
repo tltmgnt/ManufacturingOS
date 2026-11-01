@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from manufacturing_os._version import __version__
+from .mock_enterprise_api import run_api_rehearsal
 from .synthetic_calibration_rehearsal import run_rehearsal
 from .synthetic_export_intake import run_intake
 from .temporary_use_case import encode, run_demo
@@ -29,6 +30,9 @@ Production authorization remains false.</p>
 <h2>Review the results</h2><ol>
 <li><a href="planning/index.html">Planning cases</a>: reference agreement, cost discrepancy, target shortfall and assumed capacity remedy.</li>
 <li><a href="intake/study-review.html">Read-only synthetic export intake</a> · <a href="intake/intake-provenance.json">Source provenance</a>.</li>
+<li><a href="api/study-review.html">Read-only mock ERP/MES API</a> ·
+<a href="api/transport-provenance.json">Transport provenance</a> ·
+<a href="api/mock-request-audit.json">Request audit</a>.</li>
 <li>Held-out evaluation: <a href="calibration/baseline/study-review.html">baseline</a> and
 <a href="calibration/candidate/study-review.html">frozen candidate</a> ·
 <a href="calibration/frozen-candidate.json">Fitting configuration</a> ·
@@ -60,6 +64,11 @@ def run_pilot(output: Path) -> dict:
         phase = "intake"
         status_path.write_bytes(encode({**status, "phase": phase}))
         intake = run_intake(output / "intake")
+        phase = "api"
+        status_path.write_bytes(encode({**status, "phase": phase}))
+        api = run_api_rehearsal(output / "api")
+        if api["status"] != "PASS" or api["request_count"] != 1 or api["live_integration_complete"]:
+            raise RuntimeError("Mock API rehearsal did not preserve read-only synthetic scope")
         phase = "calibration"
         status_path.write_bytes(encode({**status, "phase": phase}))
         calibration = run_rehearsal(output / "calibration")
@@ -77,11 +86,12 @@ def run_pilot(output: Path) -> dict:
                    "software_checks": [{"check": name, "result": "PASS"} for name in
                        ["Four planning outcomes, including expected discrepancy and shortfall",
                         "Raw-to-derived synthetic CSV intake and verified bundle",
+                        "Read-only loopback API transport with retained provenance",
                         "Separate fitting and held-out evaluation with frozen candidate",
                         "Baseline failure and candidate agreement retained without production authorization"]],
-                   "planning": planning, "intake": intake, "calibration": calibration}
+                   "planning": planning, "intake": intake, "api": api, "calibration": calibration}
         if any(result["production_authorized"] or result["empirical_calibration_complete"]
-               for result in (planning, intake, calibration)):
+               for result in (planning, intake, api, calibration)):
             raise RuntimeError("A synthetic component incorrectly claimed real-world acceptance")
         phase = "summary"
         (output / "rehearsal-scorecard.json").write_bytes(encode(summary))

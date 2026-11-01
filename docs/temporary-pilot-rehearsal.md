@@ -10,8 +10,9 @@ From a source checkout, using Python 3.11 or later:
 python -m examples.temporary_pilot --output runs/temporary-pilot
 ```
 
-Open `runs/temporary-pilot/index.html`. No network connection, service credentials
-or third-party runtime packages are required. The example reads bundled fixtures
+Open `runs/temporary-pilot/index.html`. No external service connection, credentials or third-party runtime packages are
+required. The API component briefly starts an HTTP server bound only to
+`127.0.0.1` on an automatically selected port and shuts it down after one GET. The example reads bundled fixtures
 and creates a new output directory; existing output is preserved. The examples
 remain repository modules rather than installed runtime CLI commands.
 
@@ -22,6 +23,7 @@ remain repository modules rather than installed runtime CLI commands.
 | `run-status.json` | RUNNING, COMPLETE or FAILED with component phase |
 | `planning/` | Four cases: agreement, discrepancy, shortfall and assumed remedy |
 | `intake/` | Synthetic raw CSV, derived reference, provenance and verified bundle |
+| `api/` | Local read-only mock API, transport provenance, request audit and study review |
 | `calibration/` | Fitting records, held-out export, frozen candidate, baseline/candidate residuals and reviews |
 
 A successful command exits 0 and reports SOFTWARE_REHEARSAL_PASSED. This requires

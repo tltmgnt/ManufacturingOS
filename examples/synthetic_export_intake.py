@@ -99,9 +99,8 @@ def prepare_intake(raw: bytes) -> tuple[dict, dict]:
     return spec, provenance
 
 
-def run_intake(output: Path) -> dict:
-    # Read only the bundled synthetic fixture; this command has no live-source selector.
-    raw = (Path(__file__).resolve().parent / "synthetic-batch-export.csv").read_bytes()
+def run_intake_bytes(raw: bytes, output: Path) -> dict:
+    """Validate and retain supplied synthetic bytes from a rehearsal source."""
     spec, provenance = prepare_intake(raw)
     preflight = preflight_study(spec)
     report = run_study(spec)
@@ -120,6 +119,12 @@ def run_intake(output: Path) -> dict:
     (output / "study-review.zip").write_bytes(archive)
     return {**provenance, "observation_status": report["observation_report"]["status"],
             "bundle_status": verification["status"]}
+
+
+def run_intake(output: Path) -> dict:
+    # Read only the bundled synthetic fixture; this command has no live-source selector.
+    raw = (Path(__file__).resolve().parent / "synthetic-batch-export.csv").read_bytes()
+    return run_intake_bytes(raw, output)
 
 
 def main():
