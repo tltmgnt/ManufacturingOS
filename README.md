@@ -23,6 +23,13 @@ the pilot twice and compare independently verified outputs:
 python -m examples.offline_repeatability --output runs/offline-repeatability
 ```
 
+An [offline edge-case rehearsal](docs/offline-edge-cases.md) checks slower
+processing, shorter deadlines, small batches and seeded zero-good-output cases:
+
+```sh
+python -m examples.offline_edge_cases --output runs/offline-edge-cases
+```
+
 ## Try a temporary use case
 
 A [synthetic bracket demo](docs/temporary-use-case.md) runs reference agreement,
