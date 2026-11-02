@@ -12,6 +12,8 @@ Three major milestones remain before a bounded pilot can be accepted:
 
 Calibration preparation now has a [protocol](docs/calibration-protocol.md) and [intake worksheet](docs/calibration-intake.md). Authorized facility data and qualified acceptance remain required; this documentation does not complete the milestone.
 
+The [milestone handoff guide](docs/pilot-milestones.md) now defines entry inputs, proposed accountable roles and closure evidence for all three gates, with integration, shadow-pilot and acceptance-record worksheets. All real-world decisions remain pending.
+
 The original phases below retain their scope. Phase 5 is a separate optional expansion, not part of prototype or pilot acceptance.
 
 ## Phase 0 — Reference specification

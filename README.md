@@ -97,6 +97,13 @@ HTTP export handoff without connecting to an external system:
 python -m examples.mock_enterprise_api --output runs/mock-api
 ```
 
+## Remaining pilot milestones
+
+The [three-milestone handoff guide](docs/pilot-milestones.md) identifies current
+missing inputs, accountable roles and acceptance evidence. It links the calibration,
+real integration, shadow-pilot and decision-record worksheets. These can be
+prepared offline; actual milestone closure requires qualified real-world evidence.
+
 ## Start the calibration milestone
 
 Use the [first-facility calibration protocol](docs/calibration-protocol.md) and
