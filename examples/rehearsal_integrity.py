@@ -211,8 +211,14 @@ def verify_rehearsal(root: Path) -> dict:
         if name in names or name == MANIFEST or type(row["bytes"]) is not int or not 0 <= row["bytes"] <= MAX_FILE or not isinstance(row["sha256"], str) or not re.fullmatch(r"[0-9a-f]{64}", row["sha256"]):
             raise ValueError("Invalid/duplicate rehearsal file record")
         names.add(name)
-    if inventory(root) != records:
-        raise ValueError("Rehearsal files differ from the manifest: missing, changed or extra content")
+    actual_records = inventory(root)
+    if actual_records != records:
+        expected_by_path = {row["path"]: row for row in records}
+        actual_by_path = {row["path"]: row for row in actual_records}
+        differences = [name for name in sorted(set(expected_by_path) | set(actual_by_path))
+                       if expected_by_path.get(name) != actual_by_path.get(name)]
+        detail = ", ".join(differences[:5]) or "manifest record ordering"
+        raise ValueError("Rehearsal files differ from the manifest: missing, changed or extra content; " + detail)
     scorecard = check_complete(root)
     provenance = loads(read_file(root / "source-provenance.json"))
     if digest(provenance["files"]) != provenance["source_fingerprint"] or provenance["source_fingerprint"] != manifest["source_fingerprint"] or scorecard["source_fingerprint"] != manifest["source_fingerprint"]:

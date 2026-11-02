@@ -37,8 +37,9 @@ class RehearsalIntegrityTests(unittest.TestCase):
         path = self.root / "index.html"
         saved = path.read_bytes()
         path.write_bytes(saved + b"changed")
-        with self.assertRaisesRegex(ValueError, "differ from the manifest"):
+        with self.assertRaisesRegex(ValueError, "differ from the manifest") as error:
             verify_rehearsal(self.root)
+        self.assertIn("index.html", str(error.exception))
         path.unlink()
         with self.assertRaises(ValueError):
             verify_rehearsal(self.root)

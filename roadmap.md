@@ -1,8 +1,8 @@
 # Development Roadmap
 
-## v0.2.0 checkpoint and remaining milestones
+## v0.3.0 offline checkpoint and remaining milestones
 
-v0.1.0 consolidated the reference specifications and advisory prototype. v0.2.0 adds a complete synthetic software rehearsal: planning alternatives, CSV/mock API intake, access/failure checks, separate fitting/held-out evaluation, source provenance and verified review artifacts. This preparation does not close the real-world gates below. Phase 1 is implemented with deterministic mock specialists. Phase 2 calculations, simulation, and validation tooling exist, but empirical calibration is not complete. Local evidence capture is an integration foundation, not a live enterprise connector.
+v0.1.0 consolidated the reference specifications and advisory prototype. v0.2.0 adds a complete synthetic software rehearsal: planning alternatives, CSV/mock API intake, access/failure checks, separate fitting/held-out evaluation, source provenance and verified review artifacts. v0.3.0 consolidates that rehearsal with byte-repeatability, six edge cases, a 54-configuration invariant sweep, whole-suite verification and portable ZIP export. This offline preparation does not close the real-world gates below. Phase 1 is implemented with deterministic mock specialists. Phase 2 calculations, simulation, and validation tooling exist, but empirical calibration is not complete. Local evidence capture is an integration foundation, not a live enterprise connector.
 
 Three major milestones remain before a bounded pilot can be accepted:
 
