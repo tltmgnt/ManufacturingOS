@@ -1,0 +1,28 @@
+name: synthetic-benchmark-development
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  development-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m unittest discover -s tools/synthetic_benchmark -v
+      - run: python tools/synthetic_benchmark/benchmark.py run --output runs/benchmark-smoke --blocks 2
+      - run: python tools/synthetic_benchmark/verify.py runs/benchmark-smoke
+      - run: python tools/synthetic_benchmark/ablations.py --output runs/ablation-smoke --blocks 2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: synthetic-benchmark-python-${{ matrix.python-version }}
+          path: |
+            runs/benchmark-smoke/
+            runs/ablation-smoke/
+          if-no-files-found: warn
