@@ -84,6 +84,10 @@ def run_suite(output: Path):
         (output / "offline-suite.json").write_bytes(encode(result))
         (output / "index.html").write_text(render_suite(result), encoding="utf-8")
         status_file.write_bytes(encode({"status": "COMPLETE" if result["status"] == "PASS" else "FAIL", "phase": "complete"}))
+        if result["status"] == "PASS":
+            phase = "manifest"
+            from .offline_suite_integrity import write_suite_manifest
+            write_suite_manifest(output)
         return result
     except Exception:
         status_file.write_bytes(encode({"status": "FAILED", "phase": phase}))
