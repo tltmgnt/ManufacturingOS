@@ -1,6 +1,6 @@
 """Build-independent wheel smoke check in a clean venv outside the checkout.
 
-Usage: python tests/smoke_installed.py dist/manufacturingos-0.2.0-py3-none-any.whl
+Usage: python tests/smoke_installed.py dist/manufacturingos-0.3.0-py3-none-any.whl
 """
 import json
 import os
