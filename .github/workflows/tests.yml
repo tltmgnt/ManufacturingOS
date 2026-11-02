@@ -157,6 +157,13 @@ jobs:
           python-version: '3.12'
       - run: python -m examples.offline_suite --output runs/offline-suite
       - run: python -m examples.offline_suite_integrity runs/offline-suite
+      - run: python -m examples.offline_suite_bundle create runs/offline-suite --output runs/offline-suite.zip
+      - run: python -m examples.offline_suite_bundle verify runs/offline-suite.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: offline-synthetic-suite-bundle
+          path: runs/offline-suite.zip
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:
