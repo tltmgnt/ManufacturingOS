@@ -104,6 +104,16 @@ missing inputs, accountable roles and acceptance evidence. It links the calibrat
 real integration, shadow-pilot and decision-record worksheets. These can be
 prepared offline; actual milestone closure requires qualified real-world evidence.
 
+Check the unfilled [machine-readable handoff index](docs/pilot-readiness.md)
+without opening any referenced source:
+
+```sh
+python -m examples.pilot_readiness examples/pilot-readiness.json
+```
+
+The template exits 1 because owners/evidence are unsupplied. Metadata completeness
+never closes a milestone or grants production authorization.
+
 ## Start the calibration milestone
 
 Use the [first-facility calibration protocol](docs/calibration-protocol.md) and

@@ -1,0 +1,115 @@
+{
+  "milestones": [
+    {
+      "evidence": [
+        {
+          "reference": null,
+          "requirement_id": "data_authority",
+          "revision": null,
+          "sha256": null
+        },
+        {
+          "reference": null,
+          "requirement_id": "measurement_definitions",
+          "revision": null,
+          "sha256": null
+        },
+        {
+          "reference": null,
+          "requirement_id": "frozen_fit",
+          "revision": null,
+          "sha256": null
+        },
+        {
+          "reference": null,
+          "requirement_id": "heldout_results",
+          "revision": null,
+          "sha256": null
+        },
+        {
+          "reference": null,
+          "requirement_id": "qualified_decision",
+          "revision": null,
+          "sha256": null
+        }
+      ],
+      "milestone_id": "M1",
+      "owner_reference": null
+    },
+    {
+      "evidence": [
+        {
+          "reference": null,
+          "requirement_id": "source_contract",
+          "revision": null,
+          "sha256": null
+        },
+        {
+          "reference": null,
+          "requirement_id": "field_mapping",
+          "revision": null,
+          "sha256": null
+        },
+        {
+          "reference": null,
+          "requirement_id": "read_only_permission",
+          "revision": null,
+          "sha256": null
+        },
+        {
+          "reference": null,
+          "requirement_id": "audit_recovery_tests",
+          "revision": null,
+          "sha256": null
+        },
+        {
+          "reference": null,
+          "requirement_id": "security_decision",
+          "revision": null,
+          "sha256": null
+        }
+      ],
+      "milestone_id": "M2",
+      "owner_reference": null
+    },
+    {
+      "evidence": [
+        {
+          "reference": null,
+          "requirement_id": "entry_decisions",
+          "revision": null,
+          "sha256": null
+        },
+        {
+          "reference": null,
+          "requirement_id": "frozen_plan",
+          "revision": null,
+          "sha256": null
+        },
+        {
+          "reference": null,
+          "requirement_id": "baseline",
+          "revision": null,
+          "sha256": null
+        },
+        {
+          "reference": null,
+          "requirement_id": "measured_results",
+          "revision": null,
+          "sha256": null
+        },
+        {
+          "reference": null,
+          "requirement_id": "qualified_acceptance",
+          "revision": null,
+          "sha256": null
+        }
+      ],
+      "milestone_id": "M3",
+      "owner_reference": null
+    }
+  ],
+  "plan_id": "unfilled-pilot-handoff",
+  "revision": "1",
+  "schema_version": "1.0"
+}

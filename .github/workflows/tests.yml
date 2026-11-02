@@ -159,6 +159,16 @@ jobs:
       - run: python -m examples.offline_suite_integrity runs/offline-suite
       - run: python -m examples.offline_suite_bundle create runs/offline-suite --output runs/offline-suite.zip
       - run: python -m examples.offline_suite_bundle verify runs/offline-suite.zip
+      - name: Check the unfilled pilot handoff remains metadata-incomplete
+        run: |
+          handoff_status=0
+          python -m examples.pilot_readiness examples/pilot-readiness.json --output runs/pilot-readiness.json || handoff_status=$?
+          test "$handoff_status" -eq 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pilot-handoff-metadata-preflight
+          path: runs/pilot-readiness.json
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
           name: offline-synthetic-suite-bundle

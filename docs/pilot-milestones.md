@@ -46,3 +46,6 @@ do not authenticate that decision. Record actual decisions in the approved syste
 Production authorization in this prototype remains false. Write-back, equipment
 control and production release require the separate process in the
 [existing risk and safety boundaries](../risk-and-safety.md).
+
+Use the [metadata-only handoff preflight](pilot-readiness.md) to list missing
+owner and evidence-reference fields without fetching sources or inferring acceptance.
