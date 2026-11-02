@@ -21,6 +21,13 @@ and the 54-configuration invariant sweep. The [offline suite guide](docs/offline
 explains the single artifact and remaining real-world gates. Only synthetic local
 fixtures and a loopback mock API are used; there are no real-system reads.
 
+Export a [portable verified suite ZIP](docs/offline-suite-bundle.md):
+
+```sh
+python -m examples.offline_suite_bundle create runs/offline-suite --output runs/offline-suite.zip
+python -m examples.offline_suite_bundle verify runs/offline-suite.zip
+```
+
 ## Run the complete temporary rehearsal
 
 ```sh
