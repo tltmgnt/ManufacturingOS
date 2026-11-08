@@ -530,3 +530,7 @@ Execution now uses the same preparation/validation path before analysis, catchin
 ## Synthetic adapter benchmark development
 
 A separate Linux/Python development harness compares seven small scheduling adapters with bounded subprocess execution, oracle scoring, component ablations, and exploratory paired analysis. It evaluates toy adapters rather than the ManufacturingOS implementation. See [the benchmark usage and limitations](tools/synthetic_benchmark/README.md). Synthetic scores do not establish architectural superiority, independent replication, or production readiness.
+
+## ResearchOS / TECT concept integration
+
+The [ResearchOS / Topological Epistemic Control Theory technical concept paper](docs/researchos/TECT_WHITE_PAPER.md) proposes an epistemic control and assurance infrastructure for AI-generated knowledge. Read the [repository integration status](docs/researchos/INTEGRATION.md) and [machine-readable scope](docs/researchos/integration.json) for the boundary between the concept and implemented capabilities. Performance targets are research objectives, not achieved results. This documentation addition does not implement the complete ResearchOS architecture or change operational authority.
