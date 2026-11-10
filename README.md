@@ -1,5 +1,14 @@
 # ManufacturingOS
 
+<!-- research-workbench:start -->
+## Research workbench
+
+[Open this repository's private workbench](https://tltmgnt-manufacturingos.troturn31.chatgpt.site) · [All repository workbenches](https://tltmgnt-research-workbenches.troturn31.chatgpt.site)
+
+The hosted interface requires ChatGPT sign-in and access to the private Site. It supports browser-local research records, evidence fingerprints and workspace export. It is a prototype: no live AI model or repository backend is connected, and it does not establish external validation.
+<!-- research-workbench:end -->
+
+
 **v0.3.0 is an alpha advisory prototype with a complete, portable offline suite.** It includes deterministic mock-agent orchestration and initial manufacturing calculation/simulation tools. The reference specifications describe MADMS; real facility calibration, enterprise integration, and shadow-pilot acceptance remain outstanding.
 
 See [release notes](CHANGELOG.md) for the delivered scope and known limits, and [the roadmap](roadmap.md) for the remaining milestones.
