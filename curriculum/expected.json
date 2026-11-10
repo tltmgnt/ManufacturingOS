@@ -1,0 +1,56 @@
+{
+  "case_count": 8,
+  "cases": [
+    {
+      "actual": 0.72,
+      "case": "route yield 0.9*0.8",
+      "expected": 0.72,
+      "passed": true
+    },
+    {
+      "actual": 100.0,
+      "case": "72 good pieces require 100 expected starts",
+      "expected": 100.0,
+      "passed": true
+    },
+    {
+      "actual": 815.0,
+      "case": "cost: 500+165+150",
+      "expected": 815.0,
+      "passed": true
+    },
+    {
+      "actual": "finish",
+      "case": "finishing is bottleneck",
+      "expected": "finish",
+      "passed": true
+    },
+    {
+      "actual": 76.8,
+      "case": "steady-state good capacity",
+      "expected": 76.8,
+      "passed": true
+    },
+    {
+      "actual": false,
+      "case": "doubling target exceeds capacity",
+      "expected": false,
+      "passed": true
+    },
+    {
+      "actual": false,
+      "case": "estimate grants no production authority",
+      "expected": false,
+      "passed": true
+    },
+    {
+      "actual": "ValueError",
+      "case": "zero yield is rejected",
+      "expected": "ValueError",
+      "passed": true
+    }
+  ],
+  "schema_version": 1,
+  "scope": "Synthetic curriculum checks only",
+  "status": "PASS"
+}
