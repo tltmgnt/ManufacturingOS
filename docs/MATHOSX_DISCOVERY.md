@@ -1,0 +1,5 @@
+# MathOS × research adapter — ManufacturingOS
+
+Ported from [MathOS × PR #39](https://github.com/tltmgnt/MathOS/pull/39) for **offline, human-controlled mathematical research only**. This adapter offers 56 generic mathematical questions (7 frontiers × 4 directions × 2 depths), finite total-variation abstraction and GF(2) obstruction probes, and explicit NOT_CERTIFIED reporting. It does not verify new mathematics or operate this repository's application, medical, financial, military, or physical systems.
+
+Run `python -m unittest discover -s tests -p 'test_mathosx_discovery.py' -v`, then `python -m mathosx.discovery --limit 16`. Human researchers can label usefulness via `python -m mathosx.discovery --rate-question causal-abstraction:invent:research --outcome useful --evidence-ref review/example-1 --reviewer reviewer-id` and propose changes to `mathosx/feedback.v1.json` for normal Git review. Rankings adapt to those labels only, not to truth or novelty. The Actions workflow is read-only, manual/PR-triggered, and uses no secrets, scheduled jobs, model calls, automatic merges, or code changes.
